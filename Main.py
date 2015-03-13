@@ -1,3 +1,7 @@
+'''
+    Main class for a CS course grade based recommendation system using machine learning
+'''
+
 __author__ = 'sina'
 __project__ = 'STProject'
 
