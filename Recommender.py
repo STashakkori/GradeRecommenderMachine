@@ -199,6 +199,7 @@ def plotpcompprojection(longmatrix,evalues,evectors,index):
     plt.scatter(newmatrix[:,0],newmatrix[:,1],marker="p")
     plt.draw()
     plt._show()
+    return newmatrix
 
 '''
 plotsvd - A method that creates a scatter plot of a long matrix
@@ -244,9 +245,11 @@ def plotsvd(longmatrix,u,svalues,v,index):
     print "printing targets"
     print targeteigvector
     temp = targeteigvector.reshape(targeteigvector.size,1)
+    print "TEMP"
     print temp
     newmatrix = numpy.dot(longmatrix,temp)
     newmatrix = numpy.dot(newmatrix,temp.T)
+    print "+++ YES LOOK HERE +++"
     print newmatrix
     newmatrix[:,0] += mean[0]
     newmatrix[:,1] += mean[1]
@@ -258,62 +261,45 @@ def plotsvd(longmatrix,u,svalues,v,index):
     return newmatrix
 
 '''
-plotsvd - A method that creates a scatter plot of a long matrix
+ projectpca - A method that
     :: param :: longmatrix : an initial data matrix.
-    :: param :: svalues : The singular values for longmatrix, sorted in decending order.
-    :: param :: index : the index of the maximum eigen value in eigenvalues.
 '''
-def plotsvd2(longmatrix,u,svalues,v,index):
-    import matplotlib.pyplot as plt
-    print longmatrix
-    plt.cla()
-    plt.title("CS 1440 vs CS 2440 By Student :: SVD")
-    plt.scatter(longmatrix[:,0],longmatrix[:,1],marker="p",edgecolor="black",color="grey")
-    plt.ylim(-2,14.0)
-    plt.ylabel('CS 2440')
-    plt.xlabel('CS 1440')
+def projectpca(longmatrix,evalues,evectors,index):
     mean = longmatrix.mean(axis=0)
-
-    xeigvsqrt = math.sqrt(svalues[0])
-    yeigvsqrt = math.sqrt(svalues[1])
-
-    x1 = (v[0,0] * xeigvsqrt) + mean[0]   # 0.713977
-    y1 = (v[1,0] * xeigvsqrt) + mean[1]   # 0.700168
-    x2 = (v[0,1] * yeigvsqrt) + mean[0]   # -0.700168
-    y2 = (v[1,1] * yeigvsqrt) + mean[1]   # 0.7139772
-
-    x1r = (-v[0,0] * xeigvsqrt) + mean[0]   # 0.713977
-    y1r = (-v[1,0] * xeigvsqrt) + mean[1]   # 0.700168
-    x2r = (-v[0,1] * yeigvsqrt) + mean[0]   # -0.700168
-    y2r = (-v[1,1] * yeigvsqrt) + mean[1]   # 0.7139772
-
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.plot([mean[0],x1],[mean[1],y1],linewidth=2,color="green")
-    plt.plot([mean[0],x2],[mean[1],y2],linewidth=2,color="red")
-
-    plt.plot([mean[0],x1r],[mean[1],y1r],linewidth=2,color="green",zorder=1)
-    plt.plot([mean[0],x2r],[mean[1],y2r],linewidth=2,color="red",zorder=2)
-    plt.scatter(mean[0],mean[1],color="cyan",zorder=3)
-
     themean = longmatrix.mean(axis=0)
     longmatrix = numpy.subtract(longmatrix[:,:],themean)
-    targeteigvector = v[:,index]
+    targeteigvector = evectors[:,index]
     print "printing targets"
-    print targeteigvector
     temp = targeteigvector.reshape(targeteigvector.size,1)
-    print temp
     newmatrix = numpy.dot(longmatrix,temp)
     newmatrix = numpy.dot(newmatrix,temp.T)
+    newmatrix[:,0] += mean[0]
+    newmatrix[:,1] += mean[1]
+    print "printing new matrix projectpca"
     print newmatrix
+    return newmatrix
+
+'''
+ projectpca - A method that
+    :: param :: longmatrix : an initial data matrix.
+'''
+def projectsvd(longmatrix,u,s,v,index):
+    '''
+    mean = longmatrix.mean(axis=0)
+    themean = longmatrix.mean(axis=0)
+    longmatrix = numpy.subtract(longmatrix[:,:],themean)
+    targeteigvector = evectors[:,index]
+    print "printing targets"
+    temp = targeteigvector.reshape(targeteigvector.size,1)
+    newmatrix = numpy.dot(longmatrix,temp)
+    newmatrix = numpy.dot(newmatrix,temp.T)
     newmatrix[:,0] += mean[0]
     newmatrix[:,1] += mean[1]
     print "printing new matrix"
     print newmatrix
-    plt.scatter(newmatrix[:,0],newmatrix[:,1],edgecolor="black",color="magenta",marker="p")
-    plt.draw()
-    plt._show()
     return newmatrix
-
+    '''
+    return None
 
 def indexOfMax(matrix):
     return numpy.argmax(matrix)
@@ -325,10 +311,25 @@ def fillInSparseWithAvg(matrix):
     for i in range(0,matrix.shape[0]):
         for j in range(0,matrix.shape[1]):
             if j == 0 and math.isnan(matrix[i,j]):
-                matrix[i,j] = mean[0]
+                matrix[i,j] = mean[j]
             elif j == 1 and math.isnan(matrix[i,j]):
-                matrix[i,j] = mean[1]
+                matrix[i,j] = mean[j]
     return matrix,mean
+
+def fillInMatrixWithEst(matrix,estimates,nanprofile):
+    print ",,,,,,, testing matrix ,,,,,,,"
+    print matrix
+    print ",,,,,,, testing estimates ,,,,,,,"
+    print estimates
+    print ",,,,,,, testing nanprofile ,,,,,,,"
+    print nanprofile
+    for i in range(0,matrix.shape[0]):
+        for j in range(0,matrix.shape[1]):
+            if nanprofile[i,j] == 1:
+                matrix[i,j] = estimates[i,j]
+    print ",,,,,,, testing result ,,,,,,,"
+    print matrix
+    return matrix
 
 def getnanprofile(matrix):
     nanmatrix = numpy.zeros(shape=(matrix.shape[0],matrix.shape[1]))
@@ -340,7 +341,41 @@ def getnanprofile(matrix):
                 nanmatrix[i,j] = 1
     return nanmatrix
 
+def plotConvergence(matrix):
+    import matplotlib.pyplot as plt
+    import matplotlib.axes as ax
 
-def testFunction(matrix):
+    plt.cla()
+    plt.title("Missing Value Imputation :: Convergence of Estimates")
+    plt.ylabel('Mean Squared Error')
+    plt.xlabel('Iteration')
+    plt.xlim(0,10.0)
+    plt.ylim(.95,1.05)
 
+    iteration = 0
+
+    for i in matrix:
+        print i
+        tempsum = numpy.mean(i,axis = 1)
+        print "%%%%% tempsum %%%%%"
+        print tempsum
+        tempsum2 = numpy.mean(tempsum,axis = 0)
+        error = numpy.sqrt(tempsum2)
+        print iteration
+        print "#### SUM ####"
+        print error
+        temp = numpy.empty([i.shape[0],1])
+        temp.fill(iteration)
+        print "TEMP"
+        print temp
+        plt.scatter(iteration,error,edgecolor="black",color="magenta",marker="p")
+        iteration += 1
+
+    plt.xticks(numpy.arange(0,10,1.0))
+    #plt.tick_params(which='major', labelinterval=10)
+    #plt.tick_params(axis='x',labelbottom='off')
+    plt.grid()
+    #ax = plt.gca()
+    #ax.grid(True)
+    plt.show()
     return
