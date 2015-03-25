@@ -317,19 +317,19 @@ def fillInSparseWithAvg(matrix):
     return matrix,mean
 
 def fillInMatrixWithEst(matrix,estimates,nanprofile):
+    temp = matrix.copy()
     print ",,,,,,, testing matrix ,,,,,,,"
-    print matrix
+    print temp
     print ",,,,,,, testing estimates ,,,,,,,"
     print estimates
     print ",,,,,,, testing nanprofile ,,,,,,,"
     print nanprofile
-    for i in range(0,matrix.shape[0]):
-        for j in range(0,matrix.shape[1]):
+    for i in range(0,temp.shape[0]):
+        for j in range(0,temp.shape[1]):
             if nanprofile[i,j] == 1:
-                matrix[i,j] = estimates[i,j]
+                temp[i,j] = estimates[i,j]
     print ",,,,,,, testing result ,,,,,,,"
-    print matrix
-    return matrix
+    return temp
 
 def getnanprofile(matrix):
     nanmatrix = numpy.zeros(shape=(matrix.shape[0],matrix.shape[1]))
@@ -350,8 +350,10 @@ def plotConvergence(matrix):
     plt.ylabel('Mean Squared Error')
     plt.xlabel('Iteration')
     plt.xlim(0,10.0)
-    plt.ylim(.95,1.05)
-
+    plt.ylim(0.1540,0.1545)
+    #plt.ylim(.95,1.05)
+    #plt.ylim(0,1.05)
+    #plt.ylim(0,.1)
     iteration = 0
 
     for i in matrix:
@@ -372,10 +374,29 @@ def plotConvergence(matrix):
         iteration += 1
 
     plt.xticks(numpy.arange(0,10,1.0))
-    #plt.tick_params(which='major', labelinterval=10)
-    #plt.tick_params(axis='x',labelbottom='off')
     plt.grid()
-    #ax = plt.gca()
-    #ax.grid(True)
     plt.show()
     return
+
+def plotLastStage(finalmatrix):
+    plotlongmatrixscatter(finalmatrix)
+
+def rootmeansquared(matrix1,matrix2):
+    if matrix1.shape != matrix2.shape:
+        return "error"
+
+    size = matrix1.size
+    sum = 0
+
+    for i in range(0,matrix1.shape[0]):
+        for j in range(0,matrix1.shape[1]):
+            # if we are at a missing value we can't calculate msd so we move on
+            if math.isnan(matrix1[i,j]) or math.isnan(matrix2[i,j]):
+                continue
+
+            difference = matrix1[i,j] - matrix2[i,j]
+            square = difference**2
+            sum += square
+
+    mean = sum/size
+    return mean**(1/2)

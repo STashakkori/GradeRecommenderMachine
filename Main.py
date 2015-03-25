@@ -15,40 +15,17 @@ def main():
         Calculations on non-sparse matrix
     '''
     rawmatrix = Recommender.csvfiletomat("pca_input_2d.csv")
-    print rawmatrix
-    Recommender.plotlongmatrixscatter(rawmatrix)
-    Recommender.plotlongmatrixhistrogram(rawmatrix)
-    print "------------"
+    #Recommender.plotlongmatrixscatter(rawmatrix)
+    #Recommender.plotlongmatrixhistrogram(rawmatrix)
     rawsubmeanmatrix = Recommender.subtractcolmeancolslongmat(rawmatrix)
-    print rawsubmeanmatrix
-    Recommender.plotlongmatrixscattersubmean(rawsubmeanmatrix)
+    #Recommender.plotlongmatrixscattersubmean(rawsubmeanmatrix)
     covariancematrix = Recommender.covariancematrix(rawsubmeanmatrix)
-    print "------------"
-    Recommender.printlongmatrix(covariancematrix)
     eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix)
     u,svmatrix,v = numpy.linalg.svd(covariancematrix)
-    print "============"
-    print svmatrix
-    print "============"
-    print "u"
-    print u
-    print "============"
-    print "v"
-    print v
-    print "============"
-    print(eigenvalues)
-    print "============"
-    print(eigenvectors)
-    print "============"
-    print(eigenvalues.max())
-    #rawmatrix.plotlongmatrixscatterwithpcomp(rawmatrix,eigenvalues,eigenvectors)
     eindex = Recommender.indexOfMax(eigenvalues)
     svdlatentmatrix = Recommender.plotpcompprojection(rawmatrix,eigenvalues,eigenvectors,eindex)
     sindex = Recommender.indexOfMax(svmatrix)
     pcalatentmatrix = Recommender.plotsvd(rawmatrix,u,svmatrix,v,sindex)
-    print "**:: LATENT ::**"
-    print svdlatentmatrix
-    print pcalatentmatrix
 
     ######################################################################
 
@@ -63,34 +40,31 @@ def main():
     '''
     sparserawmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv") # Turn the original sparse csv file into a long matrix
     nanmatrix = Recommender.getnanprofile(sparserawmatrix) # generate a matrix that maps where nans are located in original dataset
-    print "NAN"
-    print nanmatrix
-    print sparserawmatrix
     intermediateStages = []
     filledmatrix,avg = Recommender.fillInSparseWithAvg(sparserawmatrix) # file in nan values with the mean value for that dimension
-    intermediateStages.append(numpy.power(numpy.subtract(filledmatrix,filledmatrix),2)) # squared distance of original data to itself
     print "filled matrix"
     print filledmatrix
     numiterations = 100
-    #convergences = numpy.empty([numiterations,sparserawmatrix.shape[0]])
-
-    rawmatrix2submeanmatrix = filledmatrix
-    #rawmatrix2submeanmatrix = Recommender.subtractcolmeancolslongmat(filledmatrix)
-    print rawmatrix2submeanmatrix
-    covariancematrix2 = Recommender.covariancematrix(rawmatrix2submeanmatrix)
+    original = filledmatrix.copy()
+    covariancematrix2 = Recommender.covariancematrix(original)
     Recommender.printlongmatrix(covariancematrix2)
     eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix2)
-    u,svmatrix,v = numpy.linalg.svd(covariancematrix2)
-    print "svmatrix"
-    print svmatrix
+    #u,svmatrix,v = numpy.linalg.svd(covariancematrix2)
+    #print "svmatrix"
+    #print svmatrix
     eindex = Recommender.indexOfMax(eigenvalues)
-    sindex = Recommender.indexOfMax(svmatrix)
-    result1 = Recommender.plotpcompprojection(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
-    intermediateStages.append(numpy.power(numpy.subtract(filledmatrix,result1),2))
+    #sindex = Recommender.indexOfMax(svmatrix)
+    #result1 = Recommender.plotpcompprojection(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
+    result1 = Recommender.projectpca(original,eigenvalues,eigenvectors,eindex)
+    original = filledmatrix.copy()
+    intermediateStages.append(numpy.power(numpy.subtract(original,result1),2))
     #result1 = Recommender.projectpca(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
     print "MOMENT OF TRUTH"
     print result1
-    nextiterationmatrix = Recommender.fillInMatrixWithEst(filledmatrix,result1,nanmatrix)
+    original = filledmatrix.copy()
+    nextiterationmatrix = Recommender.fillInMatrixWithEst(original,result1,nanmatrix)
+    print "$$$$ LOOK HERE $$$$"
+    print nextiterationmatrix
 
     '''
         ***
@@ -98,25 +72,42 @@ def main():
             are actually the same as the average. Will investigate this for sure.
         ***
     '''
-    #intermediateStages.append(numpy.power(numpy.subtract(filledmatrix,nextiterationmatrix),2))
+    original = filledmatrix.copy()
+    intermediateStages.append(numpy.power(numpy.subtract(original,nextiterationmatrix),2))
 
     Recommender.plotlongmatrixscatter(nextiterationmatrix)
     #result2 = Recommender.projectsvd(rawmatrix2submeanmatrix,u,svmatrix,v,sindex)
+    count = 0
+    finalproduct = []
 
     for i in range(0,numiterations-1):
-        #nextiterationmatrix = Recommender.subtractcolmeancolslongmat(nextiterationmatrix)
         covariancematrix3 = Recommender.covariancematrix(nextiterationmatrix)
+        print "TESTING COV"
+        print covariancematrix3
         #Recommender.printlongmatrix(covariancematrix3)
         eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix3)
         eindex = Recommender.indexOfMax(eigenvalues)
-        previousiterationmatrix = Recommender.projectpca(nextiterationmatrix,eigenvalues,eigenvectors,eindex)
+        #previousiterationmatrix = Recommender.projectpca(nextiterationmatrix,eigenvalues,eigenvectors,eindex)
         #estimate = Recommender.plotpcompprojection(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
-        estimate = Recommender.projectpca(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
-        intermediateStages.append(numpy.power(numpy.subtract(filledmatrix,estimate),2))
-        nextiterationmatrix = Recommender.fillInMatrixWithEst(filledmatrix,estimate,nanmatrix)
+        estimate = Recommender.projectpca(original,eigenvalues,eigenvectors,eindex)
+        print "TESTING ESTIMATE"
+        print estimate
+        original = filledmatrix.copy()
+        nextiterationmatrix = Recommender.fillInMatrixWithEst(original,estimate,nanmatrix)
+        print "TESTING NEXTITER"
+        print nextiterationmatrix
+        print "TESTING filledmatrix"
+        print filledmatrix
+        original = filledmatrix.copy()
+        intermediateStages.append(numpy.power(numpy.subtract(original,nextiterationmatrix),2))
+        count += 1
+        # last time
+        if count == numiterations - 1:
+            finalproduct.append(nextiterationmatrix)
 
     Recommender.plotlongmatrixscatter(nextiterationmatrix)
     Recommender.plotConvergence(intermediateStages)
+    #Recommender.plotLastStage(nextiterationmatrix)
 
     print "^^^^ TESTING DUDE ^^^^"
     iteration = 0
