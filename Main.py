@@ -7,6 +7,9 @@ __project__ = 'STProject'
 
 import Recommender
 import numpy
+import sys
+from sklearn.decomposition import PCA as skPCA
+from sklearn.decomposition import SparsePCA as skSparsePCA
 import matplotlib
 
 def main():
@@ -15,10 +18,7 @@ def main():
         Calculations on non-sparse matrix
     '''
     rawmatrix = Recommender.csvfiletomat("pca_input_2d.csv")
-    #Recommender.plotlongmatrixscatter(rawmatrix)
-    #Recommender.plotlongmatrixhistrogram(rawmatrix)
     rawsubmeanmatrix = Recommender.subtractcolmeancolslongmat(rawmatrix)
-    #Recommender.plotlongmatrixscattersubmean(rawsubmeanmatrix)
     covariancematrix = Recommender.covariancematrix(rawsubmeanmatrix)
     eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix)
     u,svmatrix,v = numpy.linalg.svd(covariancematrix)
@@ -38,91 +38,58 @@ def main():
         and then do another PCA. We want to repeat this process 99 times. 100 times
         total including the previous step that included inserting the mean values.
     '''
+    print "**********************************"
+    print "** STARTING SPARSE COMPUTATIONS **"
+    print "**********************************"
     sparserawmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv") # Turn the original sparse csv file into a long matrix
     nanmatrix = Recommender.getnanprofile(sparserawmatrix) # generate a matrix that maps where nans are located in original dataset
     intermediateStages = []
-    filledmatrix,avg = Recommender.fillInSparseWithAvg(sparserawmatrix) # file in nan values with the mean value for that dimension
-    print "filled matrix"
-    print filledmatrix
-    numiterations = 100
-    original = filledmatrix.copy()
-    covariancematrix2 = Recommender.covariancematrix(original)
-    Recommender.printlongmatrix(covariancematrix2)
-    eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix2)
-    #u,svmatrix,v = numpy.linalg.svd(covariancematrix2)
-    #print "svmatrix"
-    #print svmatrix
-    eindex = Recommender.indexOfMax(eigenvalues)
-    #sindex = Recommender.indexOfMax(svmatrix)
-    #result1 = Recommender.plotpcompprojection(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
-    result1 = Recommender.projectpca(original,eigenvalues,eigenvectors,eindex)
-    original = filledmatrix.copy()
-    intermediateStages.append(numpy.power(numpy.subtract(original,result1),2))
-    #result1 = Recommender.projectpca(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
-    print "MOMENT OF TRUTH"
-    print result1
-    original = filledmatrix.copy()
-    nextiterationmatrix = Recommender.fillInMatrixWithEst(original,result1,nanmatrix)
-    print "$$$$ LOOK HERE $$$$"
+    copyoforiginal = sparserawmatrix.copy()
+    nextiterationmatrix = Recommender.fillInSparseWithAvg(copyoforiginal) # file in nan values with the mean value for that dimension
+    print "**********************************"
+    print "**     FILL IN AVERAGE STEP     **"
+    print "**********************************"
+    #nextiterationmatrix = Recommender.fillInSparseWithAvg2(copyoforiginal,nanmatrix) # file in nan values with the mean value for that dimension
+    print "matrixwithavg"
     print nextiterationmatrix
-
-    '''
-        ***
-            The next line is weird as the result has a mean squared error of 0 meaning that the estimates
-            are actually the same as the average. Will investigate this for sure.
-        ***
-    '''
-    original = filledmatrix.copy()
-    intermediateStages.append(numpy.power(numpy.subtract(original,nextiterationmatrix),2))
-
-    Recommender.plotlongmatrixscatter(nextiterationmatrix)
-    #result2 = Recommender.projectsvd(rawmatrix2submeanmatrix,u,svmatrix,v,sindex)
+    numiterations = 100
     count = 0
     finalproduct = []
 
     for i in range(0,numiterations-1):
         covariancematrix3 = Recommender.covariancematrix(nextiterationmatrix)
-        print "TESTING COV"
-        print covariancematrix3
-        #Recommender.printlongmatrix(covariancematrix3)
         eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix3)
         eindex = Recommender.indexOfMax(eigenvalues)
-        #previousiterationmatrix = Recommender.projectpca(nextiterationmatrix,eigenvalues,eigenvectors,eindex)
-        #estimate = Recommender.plotpcompprojection(rawmatrix2submeanmatrix,eigenvalues,eigenvectors,eindex)
-        estimate = Recommender.projectpca(original,eigenvalues,eigenvectors,eindex)
+        estimate = Recommender.projectpca(nextiterationmatrix,eigenvalues,eigenvectors,eindex)
+        #estimate = Recommender.projectpca2(copyoforiginal,eigenvalues,eigenvectors,eindex)
         print "TESTING ESTIMATE"
         print estimate
-        original = filledmatrix.copy()
-        nextiterationmatrix = Recommender.fillInMatrixWithEst(original,estimate,nanmatrix)
-        print "TESTING NEXTITER"
-        print nextiterationmatrix
-        print "TESTING filledmatrix"
-        print filledmatrix
-        original = filledmatrix.copy()
-        intermediateStages.append(numpy.power(numpy.subtract(original,nextiterationmatrix),2))
+        if Recommender.rootmeansquared(sparserawmatrix,estimate) != "error":
+            intermediateStages.append(Recommender.rootmeansquared(sparserawmatrix,estimate))
+        else:
+            "error :: improper matrix dimensions"
+            sys.exit(0)
         count += 1
         # last time
         if count == numiterations - 1:
             finalproduct.append(nextiterationmatrix)
-
-    Recommender.plotlongmatrixscatter(nextiterationmatrix)
-    Recommender.plotConvergence(intermediateStages)
-    #Recommender.plotLastStage(nextiterationmatrix)
-
-    print "^^^^ TESTING DUDE ^^^^"
-    iteration = 0
-    for i in intermediateStages:
-        print iteration
-        print "--------"
+        nextiterationmatrix = Recommender.fillInMatrixWithEst(nextiterationmatrix,estimate,nanmatrix)
+        print "iteration"
+        print "---------"
         print i
-        iteration += 1
+        print "nextiterationmatrix"
+        print nextiterationmatrix
+
+    Recommender.plotConvergence2(intermediateStages)
+    Recommender.plotLastStage(nextiterationmatrix)
 
     '''
-    PCA.plotpcompprojection(pcafillinavg,eigenvalues,eigenvectors,eindex)
-    PCA.plotsvd(rawmatrix,u,svmatrix,v,sindex)
+        Test sklearn
     '''
+    #testpca = skPCA._fit_transform(sparserawmatrix)
+    #print "TESTING SKLEARN PCA"
+    #print testpca
 
     return
-
 if __name__ == "__main__":
     main()
