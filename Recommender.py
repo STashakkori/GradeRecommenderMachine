@@ -449,7 +449,6 @@ def plotConvergence2(matrix):
     plt.show()
     return
 
-
 def plotLastStage(finalmatrix):
     plotlongmatrixscatter(finalmatrix)
 

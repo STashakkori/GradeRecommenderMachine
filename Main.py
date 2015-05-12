@@ -1,19 +1,19 @@
 '''
     Main class for a CS course grade based recommendation system using machine learning
 '''
-
 __author__ = 'sina'
 __project__ = 'STProject'
 
 import Recommender
 import numpy
 import sys
+import CrossValRecommender
+
 from sklearn.decomposition import PCA as skPCA
 from sklearn.decomposition import SparsePCA as skSparsePCA
 import matplotlib
 
 def main():
-
     '''
         Calculations on non-sparse matrix
     '''
@@ -80,16 +80,11 @@ def main():
         print "nextiterationmatrix"
         print nextiterationmatrix
 
-    Recommender.plotConvergence2(intermediateStages)
-    Recommender.plotLastStage(nextiterationmatrix)
+    # Uncomment these for graphs and pca iterations
+    #Recommender.plotConvergence2(intermediateStages)
+    #Recommender.plotLastStage(nextiterationmatrix)
 
-    '''
-        Test sklearn
-    '''
-    #testpca = skPCA._fit_transform(sparserawmatrix)
-    #print "TESTING SKLEARN PCA"
-    #print testpca
-
+    CrossValRecommender.parsecsv('CSDataFile_ForParry_2014Nov26.csv')
     return
 if __name__ == "__main__":
     main()
