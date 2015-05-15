@@ -7,7 +7,7 @@ __project__ = 'STProject'
 import Recommender
 import numpy
 import sys
-import CrossValRecommender
+import CSDataFileParser
 
 from sklearn.decomposition import PCA as skPCA
 from sklearn.decomposition import SparsePCA as skSparsePCA
@@ -84,7 +84,11 @@ def main():
     #Recommender.plotConvergence2(intermediateStages)
     #Recommender.plotLastStage(nextiterationmatrix)
 
-    CrossValRecommender.parsecsv('CSDataFile_ForParry_2014Nov26.csv')
+    CSDataFileParser.parsecsv('CSDataFile_ForParry_2014Nov26.csv')
+    import DataOps
+    d = DataOps.DataOps
+    #d.get_results(d,"1400001")
+
     return
 if __name__ == "__main__":
     main()
