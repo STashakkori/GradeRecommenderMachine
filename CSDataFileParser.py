@@ -43,55 +43,42 @@ def parsecsv(filename):
         print majorregex.search(teststring6,re.IGNORECASE)
         print majorregex.search(teststring7,re.IGNORECASE)
         print endnumberregex.search(teststring8,re.IGNORECASE)
-
-    print minorregex.search(teststring5,re.IGNORECASE)
-    print majorregex.search(teststring6,re.IGNORECASE)
-    print majorregex.search(teststring7,re.IGNORECASE)
-    print re.match(courseregex,teststring4)
-    print re.match(graderegex,teststring4)
-    print re.match(gradegparegex,teststring4)
-    print("********")
-    print re.search(endnumberregex,teststring1)
-    print re.search(endnumberregex,teststring2).group(0)
-    print re.search(endnumberregex,teststring3).group(0)
-    print re.search(endnumberregex,teststring4).group(0)
-    print re.search(endnumberregex,teststring5).group(0)
-    print re.search(endnumberregex,teststring6).group(0)
-    print re.search(endnumberregex,teststring7).group(0)
-    print re.search(endnumberregex,teststring8).group(0)
 '''
 
     t0 = time.time()
 
-    for i in range(0,len(pieces)):
-        for j in range(0,len(pieces[i])):
-            if(i > 0 and pieces[i][j].strip('\r').strip('\n') and not re.match(graderegex,pieces[0][j])
-               and not re.match(gradegparegex,pieces[0][j])):
-                studentdictionary.setdefault(pieces[i][0],{})[pieces[i][j].strip('\r').strip('\n')] = []
-                activitydictionary.setdefault(pieces[i][j].strip('\r').strip('\n'),{})[pieces[i][0]] = []
+    for i in range(1,len(pieces)):
+        studentdictionary[pieces[i][0]] = {}
+
+        for j in range(1,len(pieces[i])):
+
+            if(pieces[i][j].strip('\r').strip('\n') and not re.match(graderegex,pieces[0][j]) and not re.match(gradegparegex,pieces[0][j])):
+                if pieces[0][j] not in activitydictionary: activitydictionary[pieces[0][j]] = {}
 
                 # if it's a course, then we want to make that the key and grab it's grade and insert that as the value
                 if(re.match(courseregex,pieces[0][j])):
-                    studentdictionary.setdefault(pieces[i][0],{})[pieces[i][j].strip('\r').strip('\n')].append(pieces[i][j+131].strip('\r').strip('\n'))
-                    activitydictionary.setdefault(pieces[i][j].strip('\r').strip('\n'),{})[pieces[i][0]].append(pieces[i][j+131].strip('\r').strip('\n'))
-                    print("COURSE")
-                    print("pieces[i][0]: " + pieces[i][0])
-                    print("pieces[i][j]: " + pieces[i][j])
-                    print("pieces[i][j+131]: " + pieces[i][j+131])
+                    studentdictionary[pieces[i][0]].setdefault(pieces[i][j].strip('\r').strip('\n'),[])
+                    studentdictionary[pieces[i][0]][pieces[i][j]].append(pieces[i][j+131].strip('\r').strip('\n'))
+
+                    activitydictionary.setdefault(pieces[i][j].strip('\r').strip('\n'),{})
+                    activitydictionary[pieces[i][j].strip('\r').strip('\n')].setdefault(pieces[i][0],[])
+                    activitydictionary[pieces[i][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j+131].strip('\r').strip('\n'))
+
+                    #activitydictionary[pieces[i][j].strip('\r').strip('\n')].setdefault(pieces[i][0],[])
+                    #activitydictionary[pieces[i][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j+131].strip('\r').strip('\n'))
 
                 # otherwise, use the column header as the key and just insert the csv entry as the value
                 else:
-                    studentdictionary.setdefault(pieces[i][0],{})[pieces[0][j].strip('\r').strip('\n')] = pieces[i][j].strip('\r').strip('\n')
-                    activitydictionary.setdefault(pieces[0][j].strip('\r').strip('\n'),{})[pieces[i][0]] = pieces[i][j].strip('\r').strip('\n')
-                    print("ELSE")
-                    print("pieces[i][0]: " + pieces[i][0])
-                    print("pieces[i][j]: " + pieces[i][j])
-                    print("pieces[i][j+131]: " + pieces[i][j+131])
+                    studentdictionary[pieces[i][0]].setdefault(pieces[0][j].strip('\r').strip('\n'),[])
+                    studentdictionary[pieces[i][0]][pieces[0][j]].append(pieces[i][j].strip('\r').strip('\n'))
+
+                    activitydictionary[pieces[0][j].strip('\r').strip('\n')].setdefault(pieces[i][0],[])
+                    activitydictionary[pieces[0][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j].strip('\r').strip('\n'))
 
                 file.close()
 
     #pp = pprint.PrettyPrinter(indent=3)
-    #pp.pprint(studentdictionary)
+    #pp.pprint(activitydictionary)
 
     storedataasjson(studentdictionary,studentstoragefilename)
     storedataasjson(activitydictionary,activitystoragefilename)
