@@ -87,6 +87,10 @@ def main():
     #CSDataFileParser.parsecsv('CSDataFile_ForParry_2014Nov26.csv')
     import DataOps
     d = DataOps.loadergetter()
+    d.grademerger(d.studentdict)
+    counts = d.countsmapper(d.gradelist)
+    d.gradehistogrammer(counts)
+
     entry1 = d.get_results("1400002")
     entry2 = d.get_results("C S 1440")
     return
