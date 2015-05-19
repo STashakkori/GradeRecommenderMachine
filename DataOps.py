@@ -12,7 +12,7 @@ class loadergetter:
     def __init__(self):
         self.studentdict = self.load_json("preprocessing/studentdictionary.json")
         self.activitydict =self.load_json("preprocessing/activitydictionary.json")
-        print "DataOps :: datastructures loaded"
+        print "DataOps -> datastructures loaded"
 
     def get_results(self,string):
         import re

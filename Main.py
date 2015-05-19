@@ -89,7 +89,6 @@ def main():
     d = DataOps.loadergetter()
     entry1 = d.get_results("1400002")
     entry2 = d.get_results("C S 1440")
-    print entry1["C S 1440"]
     return
 if __name__ == "__main__":
     main()
