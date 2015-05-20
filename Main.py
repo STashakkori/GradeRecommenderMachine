@@ -31,7 +31,6 @@ def main():
 
     '''
         * Calculations on sparse matrix *
-
         What we want to do here is take the matrix with means inserted in place
         of sparse values and run PCA on it. Then we want to project that back onto
         the previous full-size matrix. Then we want to plot the mean squared error
@@ -87,6 +86,10 @@ def main():
     #CSDataFileParser.parsecsv('CSDataFile_ForParry_2014Nov26.csv')
     import DataOps
     d = DataOps.loadergetter()
+    d.grademerger(d.studentdict)
+    counts = d.countsmapper(d.gradelist)
+    d.gradehistogrammer(counts)
+
     entry1 = d.get_results("1400002")
     entry2 = d.get_results("C S 1440")
     return
