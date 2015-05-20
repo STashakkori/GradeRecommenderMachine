@@ -89,6 +89,9 @@ def main():
     d.grademerger(d.studentdict)
     counts = d.countsmapper(d.gradelist)
     d.gradehistogrammer(counts)
+    print(d.calculatelettergrademean(counts))
+    #print(d.calculatelettergrademedian(counts))
+    print(d.calculatelettergrademode(counts))
 
     entry1 = d.get_results("1400002")
     entry2 = d.get_results("C S 1440")

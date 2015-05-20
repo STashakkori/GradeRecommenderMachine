@@ -17,7 +17,6 @@ def parsecsv(filename):
         data = file.readlines()
 
     pieces = []
-    #merged = []
 
     for line in data:
         pieces.append(line.split(','))
@@ -63,9 +62,6 @@ def parsecsv(filename):
                     activitydictionary.setdefault(pieces[i][j].strip('\r').strip('\n'),{})
                     activitydictionary[pieces[i][j].strip('\r').strip('\n')].setdefault(pieces[i][0],[])
                     activitydictionary[pieces[i][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j+131].strip('\r').strip('\n'))
-
-                    #activitydictionary[pieces[i][j].strip('\r').strip('\n')].setdefault(pieces[i][0],[])
-                    #activitydictionary[pieces[i][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j+131].strip('\r').strip('\n'))
 
                 # otherwise, use the column header as the key and just insert the csv entry as the value
                 else:
