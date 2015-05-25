@@ -8,6 +8,7 @@ import Recommender
 import numpy
 import sys
 import CSDataFileParser
+import operator
 
 from sklearn.decomposition import PCA as skPCA
 from sklearn.decomposition import SparsePCA as skSparsePCA
@@ -91,15 +92,15 @@ def main():
     #d.allgradehistogrammer(counts)
     entry = d.get_results("1400002")
     entry2 = d.get_results("C S 1440")
+    #entry2 = d.get_results("PSY 3201")
     print entry2
     d.grademerger(entry2)
     print d.gradelist
     counts = d.countsmapper(d.gradelist)
     print counts
+    print sum(counts.values())
     d.recordgradehistogrammer(counts)
     #d.recordgrademerger(d.get_results("C S 1440"))
-
-
     return
 if __name__ == "__main__":
     main()
