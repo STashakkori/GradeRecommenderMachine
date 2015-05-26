@@ -19,6 +19,7 @@ class loadergetter:
     activitydict = {}
     gradelist = []
     title = ""
+    numberofstudents = 0
     graderegex = re.compile('^((\*?[A-DFSIWU][+-]?) ?)?(NG|XG|NR|WB|WF|AU|XP|XC|CV|CR|WC|IE)*$')
     traditionalgraderegex = re.compile('^\*?[A-DFSIWU][+-]?$')
     gradenumericsmap = {"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"C-":1.7,"D+":1.3,"D":1.0,"D-":0.7,"F":0.0}
@@ -93,19 +94,17 @@ class loadergetter:
         plt.ylim(0, ymax)
         plt.autoscale(enable=True, axis=u'x', tight=None)
         plt.title("Letter Grade Histogram of All Students That Have Taken a CS Class")
-        mean = self.calculatelettergrademean(dictionary)
-        median = self.calculatelettergrademedian(self.gradelist)
-        twelvepointmean = self.calculatetwelvepointmean(dictionary)
-        variance = self.calculatevariance(dictionary)
+        mean = self.calculategrademean(dictionary)
+        median = self.calculategrademedian(self.gradelist)
+        variance = self.calculatevariance()
         starty = 120000
-        plt.text(5.9, starty - 0 * 6000, "Mean Grade: " + str(mean), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 1 * 6000, "Median Grade: " + str(median), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 2 * 6000, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 3 * 6000, "Twelve-point Mean: " + str(twelvepointmean), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 4 * 6000, "Variance: " + str(variance), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 5 * 6000, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 6 * 6000, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 7 * 6000, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 0 * 6000, "Mean Grade: " + str(mean), fontsize=8,color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 1 * 6000, "Median Grade: " + str(median), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 2 * 6000, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 3 * 6000, "Variance: " + str(variance), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 4 * 6000, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 5 * 6000, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 6 * 6000, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.xlabel('Grades')
         plt.ylabel('Occurences')
         plt.show()
@@ -117,19 +116,23 @@ class loadergetter:
         ymax = max(dictionary.values()) + 1
         plt.autoscale(enable=True, axis=u'x', tight=None)
         plt.title("Letter Grade Histogram of " + self.title)
-        mean = self.calculatelettergrademean(dictionary)
-        median = self.calculatelettergrademedian(self.gradelist)
-        twelvepointmean = self.calculatetwelvepointmean(dictionary)
+        mean = self.calculategrademean(dictionary)
+        median = self.calculategrademedian(self.gradelist)
         variance = self.calculatevariance()
+        passinggrades = self.countpassinggrades(self.gradelist)
+        gradesbetterthanacminus = self.countgradesbetterthanacminus(self.gradelist)
         starty = dictionary[max(dictionary.iteritems(), key=operator.itemgetter(1))[0]]
-        plt.text(3.4, starty - 0 * starty / 20, "Mean Grade: " + str(mean), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 1 * starty / 20, "Median Grade: " + str(median), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 2 * starty / 20, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 3 * starty / 20, "Twelve-point Mean: " + str(twelvepointmean), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 4 * starty / 20, "Variance: " + str(variance), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 5 * starty / 20, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 6 * starty / 20, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 7 * starty / 20, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 0 * starty / 20, "Mean Grade: " + str(mean), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 1 * starty / 20, "Median Grade: " + str(median), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 2 * starty / 20, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=8,color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 3 * starty / 20, "Variance: " + str(variance), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 4 * starty / 20, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=8,color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 5 * starty / 20, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=8,color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 6 * starty / 20, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 7 * starty / 20, "Total Students: " + str(self.numberofstudents), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 8 * starty / 20, "Number of Times Class Has Been Taken: " + str(sum(dictionary.values())), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 9 * starty / 20, "Number of Passing Grades: " + str(passinggrades), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 10 * starty / 20, "Number of C's or Better: " + str(gradesbetterthanacminus), fontsize=8, color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.xlabel('Grades')
         plt.ylabel('Occurences')
         sigma = math.sqrt(variance)
@@ -139,7 +142,7 @@ class loadergetter:
         timestring = time.strftime("%Y%m%d-%H%M%S")
         plt.savefig("figures/histogram-" + timestring)
 
-    def calculatelettergrademean(self, dictionary):
+    def calculategrademean(self, dictionary):
         sum = 0.0
         count = 0.0
         for grade in dictionary:
@@ -149,8 +152,20 @@ class loadergetter:
 
         return sum / count
 
-    def calculatelettergrademedian(self, list):
+    def calculategrademedian(self, list):
         numericlist = self.gradelisttonumeric(list)
+        sortedlist = self.quicksort(numericlist)
+        numitems = len(sortedlist)
+        if len(list) % 2 == 0:
+            sum = sortedlist[numitems / 2] + sortedlist[numitems / 2 + 1]
+            median = sum / 2
+            return median
+
+        else:
+            return sortedlist[len(sortedlist)/2]
+
+    def calculatetwelvepointgrademedian(self, list):
+        numericlist = self.gradelisttotwelvepointnumeric(list)
         sortedlist = self.quicksort(numericlist)
         numitems = len(sortedlist)
         if len(list) % 2 == 0:
@@ -228,7 +243,15 @@ class loadergetter:
 
         return newlist
 
-    def calculatetwelvepointmean(self,dictionary):
+    def gradelisttotwelvepointnumeric(self,list):
+        newlist = []
+        for grade in list:
+            if grade in self.twelvepointgrademap:
+                newlist.append(self.twelvepointgrademap[grade])
+
+        return newlist
+
+    def calculatetwelvepointmean(self, dictionary):
         sum = 0.0
         count = 0.0
 
@@ -242,3 +265,30 @@ class loadergetter:
     def calculatevariance(self):
         numlist = self.gradelisttonumeric(self.gradelist)
         return statistics.variance(numlist)
+
+    def calculatetwelvepointvariance(self):
+        numlist = self.gradelisttotwelvepointnumeric(self.gradelist)
+        return statistics.variance(numlist)
+
+    def countgradesbetterthanacminus(self, list):
+        count = 0
+        for grade in list:
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C":
+                count = count + 1
+
+        return count
+
+    def countpassinggrades(self, list):
+        count = 0
+        for grade in list:
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "D+" or grade == "D" or grade == "D-":
+                count = count + 1
+
+        return count
+
+    def countnumberoftimesclasshasbeentaken(self,list):
+        for grade in list:
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "*F" or grade == "S":
+                count = count + 1
+
+        return count
