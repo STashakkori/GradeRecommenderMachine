@@ -7,9 +7,12 @@ import re
 import statistics
 import scipy.stats as stats
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 import numpy
 import operator
 import time
+from collections import OrderedDict
+import math
 
 class loadergetter:
     studentdict = {}
@@ -19,7 +22,7 @@ class loadergetter:
     graderegex = re.compile('^((\*?[A-DFSIWU][+-]?) ?)?(NG|XG|NR|WB|WF|AU|XP|XC|CV|CR|WC|IE)*$')
     traditionalgraderegex = re.compile('^\*?[A-DFSIWU][+-]?$')
     gradenumericsmap = {"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"C-":1.7,"D+":1.3,"D":1.0,"D-":0.7,"F":0.0}
-    customparametricmap = {"A":11.0,"A-":10.0,"B+":9.0,"B":8.0,"B-":7.0,"C+":6.0,"C":5.0,"C-":4.0,"D+":3.0,"D":2.0,"D-":1.0,"F":0.0}
+    twelvepointgrademap = {"A":12.0,"A-":11.0,"B+":10.0,"B":9.0,"B-":8.0,"C+":7.0,"C":6.0,"C-":5.0,"D+":4.0,"D":3.0,"D-":2.0,"F":0.0}
 
     def __init__(self):
         self.studentdict = self.load_json("preprocessing/studentdictionary.json")
@@ -27,6 +30,7 @@ class loadergetter:
         print "DataOps -> datastructures loaded"
 
     def get_results(self,string):
+        self.gradelist = []
         dummieidregex = re.compile('^[0-9]{7}')
         self.title = string
 
@@ -72,7 +76,6 @@ class loadergetter:
                         self.gradelist.append(value)
 
     def countsmapper(self,list):
-        from collections import OrderedDict
         countmap = OrderedDict([("A",0),("A-",0),("B+",0),("B",0),("B-",0),("C+",0),("C",0),("C-",0),("D+",0),("D",0),("D-",0),("F",0),("I",0),("S",0),("U",0),("W",0),("*F",0),("Other",0)])
         for item in list:
             if self.traditionalgraderegex.search(item):
@@ -92,19 +95,17 @@ class loadergetter:
         plt.title("Letter Grade Histogram of All Students That Have Taken a CS Class")
         mean = self.calculatelettergrademean(dictionary)
         median = self.calculatelettergrademedian(self.gradelist)
-        paradistpga = self.calculateparametricdistribution(dictionary, 4)
-        paradist = self.calculateparametricdistribution(dictionary, 12)
+        twelvepointmean = self.calculatetwelvepointmean(dictionary)
         variance = self.calculatevariance(dictionary)
         starty = 120000
         plt.text(5.9, starty - 0 * 6000, "Mean Grade: " + str(mean), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.text(5.9, starty - 1 * 6000, "Median Grade: " + str(median), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.text(5.9, starty - 2 * 6000, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 3 * 6000, "Parametric Distribution(GPA scale): " + str(paradistpga), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 4 * 6000, "Parametric Distribution: " + str(paradist), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 5 * 6000, "Variance: " + str(variance), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 6 * 6000, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 7 * 6000, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(5.9, starty - 8 * 6000, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 3 * 6000, "Twelve-point Mean: " + str(twelvepointmean), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 4 * 6000, "Variance: " + str(variance), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 5 * 6000, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 6 * 6000, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(5.9, starty - 7 * 6000, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.xlabel('Grades')
         plt.ylabel('Occurences')
         plt.show()
@@ -118,21 +119,22 @@ class loadergetter:
         plt.title("Letter Grade Histogram of " + self.title)
         mean = self.calculatelettergrademean(dictionary)
         median = self.calculatelettergrademedian(self.gradelist)
-        paradistpga = self.calculateparametricdistribution(dictionary, 4)
-        paradist = self.calculateparametricdistribution(dictionary, 12)
+        twelvepointmean = self.calculatetwelvepointmean(dictionary)
         variance = self.calculatevariance()
-        starty = dictionary[max(dictionary.iteritems(), key=operator.itemgetter(1))[0]] - 20
+        starty = dictionary[max(dictionary.iteritems(), key=operator.itemgetter(1))[0]]
         plt.text(3.4, starty - 0 * starty / 20, "Mean Grade: " + str(mean), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.text(3.4, starty - 1 * starty / 20, "Median Grade: " + str(median), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.text(3.4, starty - 2 * starty / 20, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 3 * starty / 20, "Parametric Distribution(GPA scale): " + str(paradistpga), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 4 * starty / 20, "Parametric Distribution: " + str(paradist), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 5 * starty / 20, "Variance: " + str(variance), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 6 * starty / 20, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 7 * starty / 20, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 8 * starty / 20, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 3 * starty / 20, "Twelve-point Mean: " + str(twelvepointmean), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 4 * starty / 20, "Variance: " + str(variance), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 5 * starty / 20, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 6 * starty / 20, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=12,color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 7 * starty / 20, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=12, color='red', bbox=dict(facecolor='green', alpha=0.5))
         plt.xlabel('Grades')
         plt.ylabel('Occurences')
+        sigma = math.sqrt(variance)
+        x = numpy.linspace(0,len(dictionary),1000)
+        plt.plot(x,starty * mlab.normpdf(x,mean,sigma),'-r',linewidth=2)
         plt.show()
         timestring = time.strftime("%Y%m%d-%H%M%S")
         plt.savefig("figures/histogram-" + timestring)
@@ -142,8 +144,9 @@ class loadergetter:
         count = 0.0
         for grade in dictionary:
             if grade in self.gradenumericsmap:
-                sum = sum + self.gradenumericsmap[grade]
-                count = count + 1.0
+                sum = sum + self.gradenumericsmap[grade] * dictionary.get(grade)
+                count = count + dictionary.get(grade)
+
         return sum / count
 
     def calculatelettergrademedian(self, list):
@@ -225,27 +228,16 @@ class loadergetter:
 
         return newlist
 
-    def calculateparametricdistribution(self,dictionary,flag):
+    def calculatetwelvepointmean(self,dictionary):
         sum = 0.0
         count = 0.0
 
-        if flag != 4 and flag != 12:
-            print "calculateparametricdistribution :: NOT A VALID FLAG ::"
-            return
+        for grade in dictionary:
+            if grade in self.twelvepointgrademap:
+                sum = sum + self.twelvepointgrademap[grade] * dictionary.get(grade)
+                count = count + dictionary.get(grade)
 
-        if not flag or flag == 4:
-            for grade in dictionary:
-                if grade in self.gradenumericsmap:
-                    sum = sum + self.gradenumericsmap[grade]
-                    count = count + 1.0
-
-        if flag == 12:
-            for grade in dictionary:
-                if grade in self.customparametricmap:
-                    sum = sum + self.customparametricmap[grade]
-                    count = count + 1.0
-
-        return sum/count
+        return sum / count
 
     def calculatevariance(self):
         numlist = self.gradelisttonumeric(self.gradelist)
