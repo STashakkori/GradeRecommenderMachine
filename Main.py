@@ -91,8 +91,9 @@ def main():
     #counts = d.countsmapper(d.gradelist)
     #d.allgradehistogrammer(counts)
     entry = d.get_results("1400002")
-    entry2 = d.get_results("PSY 3201")
+    entry2 = d.get_results("C S 2440")
     d.numberofstudents = len(entry2.keys())
+    print d.numberofstudents
     #entry2 = d.get_results("PSY 3201")
     #entry2 = d.get_results("C S 2440")
     print entry2
