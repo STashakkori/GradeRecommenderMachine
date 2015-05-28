@@ -7,6 +7,7 @@ __project__ = 'STProject'
 import Recommender
 import numpy
 import sys
+import re
 import CSDataFileParser
 import operator
 
@@ -91,9 +92,9 @@ def main():
     #counts = d.countsmapper(d.gradelist)
     #d.allgradehistogrammer(counts)
     entry = d.get_results("1400002")
-    entry2 = d.get_results("C S 2440")
-    d.numberofstudents = len(entry2.keys())
-    print d.numberofstudents
+    entry2 = d.get_results("C S 2490")
+    d.numberofstudents = countnumberofqualifyingtudents(entry2)
+    print ":: STUFF ::"
     #entry2 = d.get_results("PSY 3201")
     #entry2 = d.get_results("C S 2440")
     print entry2
@@ -103,7 +104,28 @@ def main():
     print counts
     print sum(counts.values())
     d.recordgradehistogrammer(counts)
-    #d.recordgrademerger(d.get_results("C S 1440"))
     return
+
+def countnumberortotalstudents(dictionary):
+    len(dictionary.keys())
+
+def countnumberofqualifyingtudents(dictionary):
+    takenclassregex = re.compile('^\*?[A-DFS][+-]?$')
+    count = 0
+    flag = False
+    for student in dictionary:
+        if flag:
+            count = count + 1
+            flag = False
+        for grade in dictionary[student]:
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S": # or grade == "*F" or takenclassregex.search(grade):
+                flag = True
+
+    if flag:
+        count = count + 1
+
+    return count
+
+
 if __name__ == "__main__":
     main()

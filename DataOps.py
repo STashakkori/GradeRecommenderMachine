@@ -125,25 +125,26 @@ class loadergetter:
         gradesbetterthanacminus = (float(self.countgradesbetterthanacminus(self.gradelist)) / float(numberoftakes)) * 100.0
         starty = dictionary[max(dictionary.iteritems(), key=operator.itemgetter(1))[0]] - 20
         sizeoffont = 6
-        plt.text(3.4, starty - 0 * starty / 30, "Mean Grade: " + str(mean), fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 1 * starty / 30, "Median Grade: " + str(median), fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 2 * starty / 30, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=sizeoffont,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 3 * starty / 30, "Variance: " + str(variance), fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 4 * starty / 30, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=sizeoffont,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 5 * starty / 30, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=sizeoffont,color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 6 * starty / 30, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 7 * starty / 30, "Total Students: " + str(self.numberofstudents), fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 8 * starty / 30, "Number of Times Class Has Been Taken: " + str(numberoftakes), fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 9 * starty / 30, "Percent Passing Grades: " + str(passinggrades) + "%", fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
-        plt.text(3.4, starty - 10 * starty / 30, "Percent C's or Better: " + str(gradesbetterthanacminus) + "%", fontsize=sizeoffont, color='red', bbox=dict(facecolor='green', alpha=0.5))
+        plt.text(3.4, starty - 0 * starty / 30, "Mean Grade: " + str(mean), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 1 * starty / 30, "Median Grade: " + str(median), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 2 * starty / 30, "Mode Grade: " + self.calculatelettergrademode(dictionary), fontsize=sizeoffont,color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 3 * starty / 30, "Variance: " + str(variance), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 4 * starty / 30, "Standard Deviation: " + str(statistics.stdev(self.gradelisttonumeric(self.gradelist))), fontsize=sizeoffont,color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 5 * starty / 30, "Skewness: " + str(stats.skew(self.gradelisttonumeric(self.gradelist))), fontsize=sizeoffont,color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 6 * starty / 30, "Kurtosis: " + str(stats.kurtosis(self.gradelisttonumeric(self.gradelist))), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 7 * starty / 30, "Total Students: " + str(self.numberofstudents), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 8 * starty / 30, "Number of Times Class Has Been Taken: " + str(numberoftakes), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 9 * starty / 30, "Percent Passing Grades: " + str(passinggrades) + "%", fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
+        plt.text(3.4, starty - 10 * starty / 30, "Percent C's or Better: " + str(gradesbetterthanacminus) + "%", fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
         plt.xlabel('Grades')
         plt.ylabel('Occurences')
         sigma = math.sqrt(variance)
         x = numpy.linspace(0,len(dictionary),1000)
         plt.plot(x,starty * mlab.normpdf(x,mean,sigma),'-r',linewidth=2)
+        figure = plt.gcf()
         plt.show()
         timestring = time.strftime("%Y%m%d-%H%M%S")
-        plt.savefig("figures/histogram-" + timestring)
+        figure.savefig("figures/histogram-" + timestring)
 
     def calculategrademean(self, dictionary):
         sum = 0.0
@@ -292,7 +293,15 @@ class loadergetter:
     def countnumberoftimesclasshasbeentaken(self,list):
         count = 0
         for grade in list:
-            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "*F" or grade == "S" or self.takenclassregex.search(grade):
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S": #or grade == "*F" or self.takenclassregex.search(grade):
                 count = count + 1
 
         return count
+
+    def countnumberofqualifyingtudents(self,dictionary):
+        count = 0
+        for student in dictionary:
+            for list in student:
+                for grade in list:
+                    if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S": #or grade == "*F" or self.takenclassregex.search(grade):
+                        count = count + 1
