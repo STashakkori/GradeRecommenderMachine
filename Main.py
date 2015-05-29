@@ -7,9 +7,7 @@ __project__ = 'STProject'
 import Recommender
 import numpy
 import sys
-import re
 import CSDataFileParser
-import operator
 
 from sklearn.decomposition import PCA as skPCA
 from sklearn.decomposition import SparsePCA as skSparsePCA
@@ -84,33 +82,23 @@ def main():
     # Uncomment these for graphs and pca iterations
     #Recommender.plotConvergence2(intermediateStages)
     #Recommender.plotLastStage(nextiterationmatrix)
-
     #CSDataFileParser.parsecsv('CSDataFile_ForParry_2014Nov26.csv')
     import DataOps
     d = DataOps.loadergetter()
-    #d.allgrademerger(d.studentdict)
-    #counts = d.countsmapper(d.gradelist)
-    #d.allgradehistogrammer(counts)
     entry = d.get_results("1400002")
     entry2 = d.get_results("C S 2490")
     d.numberofstudents = countnumberofqualifyingtudents(entry2)
     print ":: STUFF ::"
-    #entry2 = d.get_results("PSY 3201")
-    #entry2 = d.get_results("C S 2440")
-    print entry2
     d.grademerger(entry2)
-    print d.gradelist
     counts = d.countsmapper(d.gradelist)
-    print counts
-    print sum(counts.values())
-    d.recordgradehistogrammer(counts)
+    #d.recordgradehistogrammer(counts)
+    convertDictionaryToMatrix(d.studentdict)
     return
 
 def countnumberortotalstudents(dictionary):
     len(dictionary.keys())
 
 def countnumberofqualifyingtudents(dictionary):
-    takenclassregex = re.compile('^\*?[A-DFS][+-]?$')
     count = 0
     flag = False
     for student in dictionary:
@@ -118,13 +106,26 @@ def countnumberofqualifyingtudents(dictionary):
             count = count + 1
             flag = False
         for grade in dictionary[student]:
-            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S": # or grade == "*F" or takenclassregex.search(grade):
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S":
                 flag = True
 
     if flag:
         count = count + 1
 
     return count
+
+def convertDictionaryToMatrix(dictionary):
+    rows = len(dictionary.keys())
+    columns = len(dictionary["1401880"].keys())
+    matrix = numpy.empty((rows,columns))
+    matrix[:] = numpy.NAN
+    print matrix
+    for dummieid in dictionary:
+        for activity in dictionary[dummieid]:
+            grade = dictionary[dummieid][activity][0]
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F":
+                matrix[dummieid]
+
 
 
 if __name__ == "__main__":

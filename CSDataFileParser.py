@@ -42,7 +42,7 @@ def parsecsv(filename):
         print majorregex.search(teststring6,re.IGNORECASE)
         print majorregex.search(teststring7,re.IGNORECASE)
         print endnumberregex.search(teststring8,re.IGNORECASE)
-'''
+    '''
 
     t0 = time.time()
 

@@ -293,15 +293,7 @@ class loadergetter:
     def countnumberoftimesclasshasbeentaken(self,list):
         count = 0
         for grade in list:
-            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S": #or grade == "*F" or self.takenclassregex.search(grade):
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S":
                 count = count + 1
 
         return count
-
-    def countnumberofqualifyingtudents(self,dictionary):
-        count = 0
-        for student in dictionary:
-            for list in student:
-                for grade in list:
-                    if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S": #or grade == "*F" or self.takenclassregex.search(grade):
-                        count = count + 1
