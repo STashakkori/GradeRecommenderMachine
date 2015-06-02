@@ -17,6 +17,8 @@ import math
 class loadergetter:
     studentdict = {}
     activitydict = {}
+
+
     gradelist = []
     title = ""
     numberofstudents = 0

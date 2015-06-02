@@ -84,7 +84,6 @@ def subtractrowmeanrowslongmat(longmatrix):
     matrix = longmatrix.copy()
     mean = matrix.mean(axis=0)
     return matrix[:,0] - mean
-    #return mean
 
 '''
 subtractcolmeancols - A method that subtracts the mean from the long matrix
@@ -92,7 +91,6 @@ subtractcolmeancols - A method that subtracts the mean from the long matrix
 def subtractcolmeancolslongmat(longmatrix):
     matrix = longmatrix.copy()
     mean = matrix.mean(axis=0)
-    #mean = numpy.repeat(longmatrix.mean(axis=0),longmatrix.shape[0],axis=0)
     return numpy.subtract(matrix[:,:],mean)
 
 '''
@@ -341,6 +339,20 @@ def indexOfMax(matrix):
 def fillInSparseWithAvg(matrix):
     mean = stats.nanmean(matrix,axis=0)
     print mean
+    for i in range(0,matrix.shape[0]):
+        for j in range(0,matrix.shape[1]):
+            if math.isnan(matrix[i,j]):
+                #print("Before assignment" + str(matrix[i,j]))
+                matrix[i,j] = mean[j]
+                #print("After assignment" + str(matrix[i,j]))
+
+    return matrix
+
+# Original fillInSparseWithAvg method
+'''
+def fillInSparseWithAvg(matrix):
+    mean = stats.nanmean(matrix,axis=0)
+    print mean
 
     for i in range(0,matrix.shape[0]):
         for j in range(0,matrix.shape[1]):
@@ -349,6 +361,7 @@ def fillInSparseWithAvg(matrix):
             elif j == 1 and math.isnan(matrix[i,j]):
                 matrix[i,j] = mean[j]
     return matrix
+'''
 
 def fillInSparseWithAvg2(matrix, nanprofile):
     mean = stats.nanmean(matrix,axis=0)
