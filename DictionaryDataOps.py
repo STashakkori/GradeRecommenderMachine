@@ -13,23 +13,11 @@ import operator
 import time
 from collections import OrderedDict
 import math
+import base64
 
 class loadergetter:
     studentdict = {}
     activitydict = {}
-
-    gradematrix = None
-    '''
-                <- courses ->
-                -------------
-              ^ |           |
-      dummieids |   grades  |
-              v |           |
-                -------------
-    '''
-
-    studentgrid = None
-    coursegrid = None
 
     gradelist = []
     title = ""
@@ -45,7 +33,7 @@ class loadergetter:
     def __init__(self):
         self.studentdict = self.load_json("preprocessing/studentdictionary.json")
         self.activitydict =self.load_json("preprocessing/activitydictionary.json")
-        print "DataOps -> datastructures loaded"
+        print "DictionaryDataOps -> datastructures loaded"
 
     def get_results_dictionary(self,string):
         self.gradelist = []
@@ -101,14 +89,6 @@ class loadergetter:
                 countmap[item] = countmap.setdefault(item, 0) + 1
             else:
                 countmap["Other"] = countmap.setdefault("Other", 0) + 1
-
-        return countmap
-
-    def countsmapperfrommatrix(self,list):
-        countmap = OrderedDict([("A",0),("A-",0),("B+",0),("B",0),("B-",0),("C+",0),("C",0),("C-",0),("D+",0),("D",0),("D-",0),("F",0),("I",0),("S",0),("U",0),("W",0),("*F",0),("Other",0)])
-        for item in list:
-            if not numpy.isnan(item) and self.twelvepointgradenumerictoletter(item) in countmap:
-                countmap[self.twelvepointgradenumerictoletter(item)] = countmap.setdefault(self.twelvepointgradenumerictoletter(item), 0) + 1
 
         return countmap
 
@@ -170,27 +150,6 @@ class loadergetter:
         plt.show()
         timestring = time.strftime("%Y%m%d-%H%M%S")
         figure.savefig("figures/histogram-" + timestring)
-
-    def recordgradehistogrammerfrommatrix(self, dictionary, list, title):
-        X = numpy.arange(len(dictionary))
-        plt.bar(X, dictionary.values(), align='center', width=0.5)
-        plt.xticks(X, dictionary.keys())
-        ymax = max(dictionary.values()) + 1
-        grades = self.twelvepointnumericlisttogrades(list)
-        numberoftakes = self.countnumberoftimesclasshasbeentaken(grades)
-        passinggrades = float(self.countpassinggrades(grades)) / float(numberoftakes) * 100.0
-        gradesbetterthanacminus = (float(self.countgradesbetterthanacminus(grades)) / float(numberoftakes)) * 100.0
-        starty = dictionary[max(dictionary.iteritems(), key=operator.itemgetter(1))[0]] - 20
-        sizeoffont = 6
-        plt.text(3.4, starty - 7 * starty / 30, "Total Students: " + str(self.numberofstudents), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
-        plt.text(3.4, starty - 8 * starty / 30, "Number of Times Class Has Been Taken: " + str(numberoftakes), fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
-        plt.text(3.4, starty - 9 * starty / 30, "Percent Passing Grades: " + str(passinggrades) + "%", fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
-        plt.text(3.4, starty - 10 * starty / 30, "Percent C's or Better: " + str(gradesbetterthanacminus) + "%", fontsize=sizeoffont, color='black', bbox=dict(facecolor='white', alpha=0.5,edgecolor='green'))
-        plt.autoscale(enable=True, axis=u'x', tight=None)
-        plt.title("Letter Grade Histogram of " + title)
-        plt.xlabel('Grades')
-        plt.ylabel('Occurences')
-        plt.show()
 
     def calculategrademean(self, dictionary):
         sum = 0.0
@@ -384,7 +343,7 @@ class loadergetter:
     def countnumberoftimesclasshasbeentaken(self,list):
         count = 0
         for grade in list:
-            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S":
+            if grade == "A" or grade == "A-" or grade == "B+" or grade == "B" or grade == "B-" or grade == "C+" or grade == "C" or grade == "C-" or grade == "D+" or grade == "D" or grade == "D-" or grade == "F" or grade == "S" or grade == "U":
                 count = count + 1
 
         return count
@@ -421,62 +380,31 @@ class loadergetter:
                 columncount += 1
             rowcount += 1
 
-        self.gradematrix = gradematrix
-        self.studentgrid = studentlist
-        self.coursegrid = courselist
+        return gradematrix, studentlist, courselist
 
-    def pruneEmptyColumns(self):
-        validgradereference = numpy.zeros([len(self.gradematrix[0]),1])
-        for i in range(0,self.gradematrix.shape[0]):
-            for j in range(0,self.gradematrix.shape[1]):
-                if not math.isnan(self.gradematrix[i][j]):
-                    validgradereference[j] = validgradereference[j] + 1
+    def storeMatrixInMemoryAscPickle(self, gradematrix, studentgrid, coursegrid, filename1, filename2, filename3):
+        file = open(filename1, "wb")
+        cPickle.dump(gradematrix,file,protocol=2)
+        file.close()
 
-        print "VALID GRADE REFERENCE"
-        print validgradereference
+        file = open(filename2, "wb")
+        cPickle.dump(studentgrid,file,protocol=2)
+        file.close()
 
-        self.studentgrid = self.transpose(self.removeBlankRows(self.transpose(self.studentgrid)))
-        self.coursegrid = self.transpose(self.removeBlankRows(self.transpose(self.coursegrid)))
+        file = open(filename3, "wb")
+        cPickle.dump(coursegrid,file,protocol=2)
+        file.close()
 
-        zerolist,nonzerobool = numpy.where(validgradereference == 0)
-        zeroarray = numpy.array(zerolist)
-        print zeroarray
-        for i in range(len(zeroarray)):
-            self.gradematrix = numpy.delete(self.gradematrix,zeroarray[i],1)
-            zeroarray = zeroarray - 1
-
-    def transpose(self, grid):
-        return zip(*grid)
-
-    def removeBlankRows(self, grid):
-        return [list(row) for row in grid if any(row)]
-
-    def get_results_matrix(self,input):
-        if self.dummieidregex.search(input):
-            if input in self.studentdict:
-                for i in range(0,len(self.studentgrid)):
-                    for j in range(0,len(self.studentgrid[i])):
-                        if self.studentgrid[i][j] == input:
-                            return self.gradematrix[i]
-
-            else:
-                print "get_results_matrix :: NOT A VALID DUMMIEID ::"
-
-        else:
-            if input in self.activitydict:
-                templist = []
-                for i in range(0,len(self.coursegrid)):
-                    for j in range(0,len(self.coursegrid[i])):
-                        if self.coursegrid[i][j] == input:
-                            templist.append(self.gradematrix[i][j])
-
-                return templist
-
-            else:
-                print "get_results_matrix :: NOT A VALID ACTIVITY ::"
-
-        return None
-
+        '''
+        json.dumps([str(gradematrix.dtype),base64.b64encode(gradematrix),gradematrix.shape])
+        file.close()
+        file = open(filename2, "wb")
+        json.dumps([str(studentgrid.dtype),base64.b64encode(studentgrid),studentgrid.shape])
+        file.close()
+        file = open(filename3, "wb")
+        json.dumps([str(coursegrid.dtype),base64.b64encode(coursegrid),coursegrid.shape])
+        file.close()
+        '''
 
 
 

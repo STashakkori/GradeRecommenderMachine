@@ -9,6 +9,8 @@ import numpy
 import math
 import sys
 import pprint
+import DictionaryDataOps
+import MatrixDataOps
 import CSDataFileParser
 from scipy import stats
 from sklearn.decomposition import PCA as skPCA
@@ -87,8 +89,7 @@ def main():
     #Recommender.plotConvergence2(intermediateStages)
     #Recommender.plotLastStage(nextiterationmatrix)
     #CSDataFileParser.parsecsv('CSDataFile_ForParry_2014Nov26.csv')
-    import DataOps
-    d = DataOps.loadergetter()
+    d = DictionaryDataOps.loadergetter()
     entry = d.get_results_dictionary("1400002")
     entry2 = d.get_results_dictionary("C S 2490")
     d.numberofstudents = countnumberofqualifyingtudents(entry2)
@@ -97,29 +98,23 @@ def main():
     counts = d.countsmapper(d.gradelist)
     #d.recordgradehistogrammer(counts)
 
-    d.convertDictionaryToMatrix(d.studentdict)
-    print("NANS before :: " + str(countnumberofnansinmatrix(d.gradematrix)))
+    g,s,c = d.convertDictionaryToMatrix(d.studentdict)
+    d.storeMatrixInMemoryAscPickle(g,s,c,"preprocessing/gradematrix.cPickle","preprocessing/studentgrid.cPickle","preprocessing/coursegrid.cPickle")
 
     print "TESTING THE MATRICES"
 
+    w = MatrixDataOps.loadergetter()
+    print "MATRIX HERE %%%%%%%%%***"
+    print w.gradematrix
+    w.pruneEmptyColumns()
     pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(d.gradematrix[0])
+    pp.pprint(w.gradematrix)
 
-    print str(d.gradematrix[0][0])
-    print str(d.studentgrid[0][0])
-    print str(d.coursegrid[0][0])
+    print str(w.gradematrix[0][0])
+    print str(w.studentgrid[0][0])
+    print str(w.coursegrid[0][0])
 
-    d.pruneEmptyColumns()
-
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(d.gradematrix)
-
-    print d.get_results_dictionary("1403262")
-    print d.gradematrix[0]
-    print d.coursegrid[0]
-    print d.studentgrid[0]
-
-    print d.gradematrix.shape
+    '''
     matrix = numpy.random.rand(d.gradematrix.shape[0],d.gradematrix.shape[1])
     print matrix.shape
     print matrix
@@ -128,12 +123,15 @@ def main():
     eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix3)
     print eigenvalues.shape
     print eigenvectors.shape
+    '''
 
     #print d.get_results_matrix("1403262")
-    testentry = d.get_results_matrix("C S 1440")
-    testcounts = d.countsmapperfrommatrix(testentry)
+    testentry = w.get_results("C S 1440")
+    print "TEST ENTRY"
+    print testentry
+    testcounts = w.countsmapper(testentry)
     print testcounts
-    d.recordgradehistogrammerfrommatrix(testcounts,testentry,"C S 1440")
+    w.recordgradehistogrammer(testentry)
 
     #pp.pprint(d.coursegrid)
 
