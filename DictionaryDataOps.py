@@ -379,7 +379,6 @@ class loadergetter:
                 gradematrix[rowcount][columncount] = grade
                 columncount += 1
             rowcount += 1
-
         return gradematrix, studentlist, courselist
 
     def storeMatrixInMemoryAscPickle(self, gradematrix, studentgrid, coursegrid, filename1, filename2, filename3):

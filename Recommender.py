@@ -93,6 +93,18 @@ def subtractcolmeancolslongmat(longmatrix):
     mean = matrix.mean(axis=0)
     return numpy.subtract(matrix[:,:],mean)
 
+def nonSparsePCA(matrix):
+    rawsubmeanmatrix = subtractcolmeancolslongmat(matrix)
+    covariance = covariancematrix(rawsubmeanmatrix)
+    eigenvalues,eigenvectors = eigendecompmatrix(covariance)
+    u,svmatrix,v = numpy.linalg.svd(covariance)
+    eindex = indexOfMax(eigenvalues)
+    sindex = indexOfMax(svmatrix)
+
+    #svdlatentmatrix = plotpcompprojection(matrix,eigenvalues,eigenvectors,eindex)
+    pcalatentmatrix = plotsvd(matrix,u,svmatrix,v,sindex)
+    return pcalatentmatrix
+
 '''
 covariancematrix - A method that converts a matrix to its covariance matrix
 '''

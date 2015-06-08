@@ -23,15 +23,18 @@ def main():
     '''
         Calculations on non-sparse matrix
     '''
-    rawmatrix = Recommender.csvfiletomat("pca_input_2d.csv")
-    rawsubmeanmatrix = Recommender.subtractcolmeancolslongmat(rawmatrix)
-    covariancematrix = Recommender.covariancematrix(rawsubmeanmatrix)
-    eigenvalues,eigenvectors = Recommender.eigendecompmatrix(covariancematrix)
-    u,svmatrix,v = numpy.linalg.svd(covariancematrix)
-    eindex = Recommender.indexOfMax(eigenvalues)
-    svdlatentmatrix = Recommender.plotpcompprojection(rawmatrix,eigenvalues,eigenvectors,eindex)
-    sindex = Recommender.indexOfMax(svmatrix)
-    pcalatentmatrix = Recommender.plotsvd(rawmatrix,u,svmatrix,v,sindex)
+
+    d = DictionaryDataOps.loadergetter()
+    w = MatrixDataOps.loadergetter()
+    print "MATRIX HERE %%%%%%%%%***"
+    print w.gradematrix
+    w.pruneEmptyColumns()
+    record = w.get_results("C S 1440")
+    counts = w.countsmapper(record)
+    d.recordgradehistogrammer(counts)
+    #w.recordgradehistogrammer(record)
+
+    exit(1)
 
     ######################################################################
 
