@@ -1,9 +1,11 @@
-__author__ = 'sina'
-__project__ = 'STProject'
+#!/usr/bin/python
 
-'''
-    Main class for a CS course grade based recommendation system using machine learning
-'''
+"""
+    csv2dict.py : script that reads a .csv file filled with grades, gpas, and exams scores and creates two dictionary
+                  datastructures, one for indexing via a student's dummieid and one for indexing via a course name.
+                  Once created, the dictionaries are stored in memory as json in the preprocessing directory.
+"""
+
 __author__ = 'sina'
 __project__ = 'STProject'
 
@@ -12,12 +14,14 @@ import colorama
 from termcolor import colored
 import re
 import time
+import sys
 
-'''
+"""
     main - main method of the csv2dict program.
-'''
+        :param argv: command line argument
+        :type argv: string
+"""
 def main(argv):
-    colorama.init(autoreset=True)
     print(colored("csv2dict","blue"))
     if argv and argv.endswith(".csv"):
         studentdictionary,activitydictionary = parsecsvtodictionary(argv)
@@ -30,6 +34,11 @@ def main(argv):
         print(colored("csv2dict ==> ERROR --> Bad filename input ~~> .csv required","red"))
         exit(1)
 
+"""
+    parsecsvtodictionary - method that reads a csv file, splits it on commas, and then populates two dictionaries with
+                           relevant data. Studentdictionary is indexable by student dummieid. Activity dictionary is
+                           indexable by the activity name.
+"""
 def parsecsvtodictionary(filename):
     with open(filename) as file:
         data = file.readlines()
@@ -75,10 +84,11 @@ def parsecsvtodictionary(filename):
                     activitydictionary[pieces[0][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j].strip('\r').strip('\n'))
 
                 file.close()
-
     return studentdictionary,activitydictionary
 
-# Method that writes an object to memory in json format
+"""
+    storedataasjson - method that writes an object to memory in json format.
+"""
 def storedataasjson(dictionary, filename):
     import json
     file = open("preprocessing/" + filename, "wb")
@@ -87,8 +97,18 @@ def storedataasjson(dictionary, filename):
     print(colored("csv2dict ==> SUCCESS --> " + filename + " file written to the preprocessing directory.","cyan"))
 
 if __name__ == "__main__":
-    t0 = time.time()
-    main("CSDataFile_ForParry_2014Nov26.csv")
-    t1 = time.time()
-    totaltime = t1 - t0
-    print(colored("csv2dict =~> " + str(totaltime) + " seconds.","yellow"))
+    usage = colored("csv2dict ==> ERROR --> Improper command line arguments ~~> Usage : python csv2dict.py <gradefile.csv> ","red")
+    if len(sys.argv) > 2:
+        print usage
+        exit(-1)
+
+    try:
+        t0 = time.time()
+        input_filename = sys.argv[1]
+        main(input_filename) # main("CSDataFile_ForParry_2014Nov26.csv")
+        t1 = time.time()
+        totaltime = t1 - t0
+        print(colored("csv2dict =~> " + str(totaltime) + " seconds.","yellow"))
+    except:
+        print usage
+        sys.exit(-1)
