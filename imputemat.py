@@ -32,6 +32,10 @@ import sys
 def main(argv1,argv2):
     colorama.init(autoreset=True)
     print(colored("imputemat","blue"))
+    import Recommender
+    testmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv")
+    #imputedmatrix = imputesvd(testmatrix)
+
     if argv1 and argv1.endswith(".npy"):
         sparsematrix = loadmatrixfrommemory(argv1)
         if argv2 == "ROWMEAN":
@@ -42,11 +46,13 @@ def main(argv1,argv2):
             imputedmatrix = imputeeig(sparsematrix)
         elif argv2 == "SVD":
             imputedmatrix = imputesvd(sparsematrix)
+            print "test"
         elif argv2 == "ALS":
             imputedmatrix = imputeals(sparsematrix)
         else:
             print(colored("mat2hist ==> ERROR --> Invalid Algorithm Option ~~> ROWMEAN, COLMEAN, EIG, SVD, or ALS required","red"))
 
+        print imputedmatrix
         #storematrixinmemory(argv1,imputedmatrix)
 
     else:
@@ -55,7 +61,6 @@ def main(argv1,argv2):
 
 def imputecolmean(matrix):
     mean = stats.nanmean(matrix,axis=0)
-    print mean.shape
     for i in range(0,matrix.shape[0]):
         for j in range(0,matrix.shape[1]):
             if math.isnan(matrix[i,j]):
@@ -64,7 +69,6 @@ def imputecolmean(matrix):
 
 def imputerowmean(matrix):
     mean = stats.nanmean(matrix,axis=1)
-    print mean.shape
     for i in range(0,matrix.shape[0]):
         for j in range(0,matrix.shape[1]):
             if math.isnan(matrix[i,j]):
@@ -72,38 +76,92 @@ def imputerowmean(matrix):
     return matrix
 
 def imputeeig(matrix):
-    nanprofile = getnanprofile(matrix)
     copyofmatrix = matrix.copy()
+    nanprofile = getnanprofile(matrix)
     filledinmatrix = imputecolmean(copyofmatrix)
+
     for i in range(0,100):
         covariancematrix = numpy.cov(filledinmatrix.T)
         eigenvalues,eigenvectors = numpy.linalg.eig(covariancematrix)
         eindex = numpy.argmax(eigenvalues)
-        mean = copyofmatrix.mean(axis=0)
-        meancopy = copyofmatrix.mean(axis=0)
-        copyofmatrix = numpy.subtract(copyofmatrix[:,:],mean)
+        mean = filledinmatrix.mean(axis=0)
+        meancopy = filledinmatrix.mean(axis=0)
+        meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
+        print eigenvectors
         targeteigvector = eigenvectors[:,eindex]
         temp = targeteigvector.reshape(targeteigvector.size,1)
-        newmatrix = numpy.dot(copyofmatrix,temp)
+        newmatrix = numpy.dot(meansubtracted,temp)
         newmatrix = numpy.dot(newmatrix,temp.T)
         for i in range(0,newmatrix.shape[1]):
-            newmatrix[:i] += mean[i]
+            newmatrix[:,i] += mean[i]
 
-        for i in range(0,temp.shape[0]):
-            for j in range(0,temp.shape[1]):
+        #print rootmeansquared(matrix,newmatrix)
+
+        for i in range(0,filledinmatrix.shape[0]):
+            for j in range(0,filledinmatrix.shape[1]):
                 if nanprofile[i,j] == 1:
-                    temp[i,j] = newmatrix[i,j]
+                    filledinmatrix[i,j] = newmatrix[i,j]
 
-    return temp
-
-def eigendecomposition(matrix):
-
+    return filledinmatrix
 
 def imputesvd(matrix):
-    return None
+    copyofmatrix = matrix.copy()
+    nanprofile = getnanprofile(matrix)
+    filledinmatrix = imputecolmean(copyofmatrix)
+
+    for i in range(0,100):
+        covariancematrix = numpy.cov(filledinmatrix.T)
+        u,svmatrix,v = numpy.linalg.svd(covariancematrix)
+        sindex = numpy.argmax(svmatrix)
+        mean = filledinmatrix.mean(axis=0)
+        meancopy = filledinmatrix.mean(axis=0)
+        meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
+        v = v.T
+        targeteigvector = v[:,sindex]
+        temp = targeteigvector.reshape(targeteigvector.size,1)
+        newmatrix = numpy.dot(meansubtracted,temp)
+        newmatrix = numpy.dot(newmatrix,temp.T)
+        for i in range(0,newmatrix.shape[1]):
+            newmatrix[:,i] += mean[i]
+
+        print rootmeansquared(matrix,newmatrix)
+
+        for i in range(0,filledinmatrix.shape[0]):
+            for j in range(0,filledinmatrix.shape[1]):
+                if nanprofile[i,j] == 1:
+                    filledinmatrix[i,j] = newmatrix[i,j]
+
+    return filledinmatrix
 
 def imputeals(matrix):
+    copyofmatrix = matrix.copy()
+    nanprofile = getnanprofile(matrix)
+
+
     return None
+
+#preprocessing/CSDataFile_ForParry_2014Nov26_grademat.npy EIG
+
+def rootmeansquared(matrix1,matrix2):
+    originalmatrix = matrix1.copy()
+    modelmatrix = matrix2.copy()
+    if originalmatrix.shape != modelmatrix.shape:
+        return "error"
+
+    sum = 0
+    size = 0
+
+    for i in range(0,originalmatrix.shape[0]):
+        for j in range(0,originalmatrix.shape[1]):
+            # if we are at a missing value we can't calculate msd so we move on
+            if not math.isnan(originalmatrix[i,j]) and not math.isnan(modelmatrix[i,j]):
+                difference = originalmatrix[i,j] - modelmatrix[i,j]
+                square = difference**2
+                sum = sum + square
+                size = size + 1.0
+
+    mean = sum/size
+    return math.sqrt(mean)
 
 def loadmatrixfrommemory(filename):
     gradematrix = numpy.load(filename)
@@ -118,14 +176,16 @@ def getnanprofile(matrix):
     nanmatrix = numpy.zeros(shape=(matrix.shape[0],matrix.shape[1]))
     for i in range(0,matrix.shape[0]):
         for j in range(0,matrix.shape[1]):
-            if j == 0 and math.isnan(matrix[i,j]):
+            if math.isnan(matrix[i,j]):
                 nanmatrix[i,j] = 1
-            elif j == 1 and math.isnan(matrix[i,j]):
-                nanmatrix[i,j] = 1
+
     return nanmatrix
 
+def countnumberofnansinmatrix(matrix):
+    return numpy.count_nonzero(numpy.isnan(matrix))
+
 if __name__ == "__main__":
-    usage = colored("imputemat ==> ERROR --> Improper command line arguments ~~> Usage : python imputemat.py <matrix.npy> <dummieid or \"coursename\">","red")
+    usage = colored("imputemat ==> ERROR --> Improper command line arguments ~~> Usage : python imputemat.py <matrix.npy> <ROWMEAN, COLMEAN, EIG, SVD, or ALS>","red")
     if len(sys.argv) > 3:
         print usage
         exit(-1)

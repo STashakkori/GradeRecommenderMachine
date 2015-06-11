@@ -284,15 +284,11 @@ def projectpca(longmatrix,evalues,evectors,index):
     themean = matrixcopy.mean(axis=0)
     matrixcopy = numpy.subtract(matrixcopy[:,:],themean)
     targeteigvector = evectors[:,index]
-    print "printing previous before projection"
-    print longmatrix
     temp = targeteigvector.reshape(targeteigvector.size,1)
     newmatrix = numpy.dot(matrixcopy,temp)
     newmatrix = numpy.dot(newmatrix,temp.T)
     newmatrix[:,0] += mean[0]
     newmatrix[:,1] += mean[1]
-    print "printing new matrix projectpca"
-    print newmatrix
     return newmatrix
 
 def projectpca2(longmatrix,evalues,evectors,index):
@@ -387,18 +383,11 @@ def fillInSparseWithAvg2(matrix, nanprofile):
 
 def fillInMatrixWithEst(matrix,estimates,nanprofile):
     temp = matrix.copy()
-    print ",,,,,,, testing matrix ,,,,,,,"
-    print temp
-    print ",,,,,,, testing estimates ,,,,,,,"
-    print estimates
-    print ",,,,,,, testing nanprofile ,,,,,,,"
-    print nanprofile
     for i in range(0,temp.shape[0]):
         for j in range(0,temp.shape[1]):
             if nanprofile[i,j] == 1:
                 temp[i,j] = estimates[i,j]
-    print ",,,,,,, testing result ,,,,,,,"
-    print temp
+
     return temp
 
 def getnanprofile(matrix):
