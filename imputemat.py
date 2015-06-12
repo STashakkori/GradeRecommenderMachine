@@ -34,7 +34,8 @@ def main(argv1,argv2):
     print(colored("imputemat","blue"))
     import Recommender
     testmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv")
-    #imputedmatrix = imputesvd(testmatrix)
+    imputedmatrix = imputeeig(testmatrix,len(testmatrix)-1)
+    #imputedmatrix = imputeeig(testmatrix,0)
 
     if argv1 and argv1.endswith(".npy"):
         sparsematrix = loadmatrixfrommemory(argv1)
@@ -43,10 +44,11 @@ def main(argv1,argv2):
         elif argv2 == "COLMEAN":
             imputedmatrix = imputecolmean(sparsematrix)
         elif argv2 == "EIG":
-            imputedmatrix = imputeeig(sparsematrix)
+            print ""
+            #imputedmatrix = imputeeig(sparsematrix)
         elif argv2 == "SVD":
-            imputedmatrix = imputesvd(sparsematrix)
-            print "test"
+            print ""
+            #imputedmatrix = imputesvd(sparsematrix)
         elif argv2 == "ALS":
             imputedmatrix = imputeals(sparsematrix)
         else:
@@ -75,7 +77,7 @@ def imputerowmean(matrix):
                 matrix[i,j] = mean[i]
     return matrix
 
-def imputeeig(matrix):
+def imputeeig(matrix,k):
     copyofmatrix = matrix.copy()
     nanprofile = getnanprofile(matrix)
     filledinmatrix = imputecolmean(copyofmatrix)
@@ -87,7 +89,6 @@ def imputeeig(matrix):
         mean = filledinmatrix.mean(axis=0)
         meancopy = filledinmatrix.mean(axis=0)
         meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
-        print eigenvectors
         targeteigvector = eigenvectors[:,eindex]
         temp = targeteigvector.reshape(targeteigvector.size,1)
         newmatrix = numpy.dot(meansubtracted,temp)
@@ -95,7 +96,7 @@ def imputeeig(matrix):
         for i in range(0,newmatrix.shape[1]):
             newmatrix[:,i] += mean[i]
 
-        #print rootmeansquared(matrix,newmatrix)
+        print rootmeansquared(matrix,newmatrix)
 
         for i in range(0,filledinmatrix.shape[0]):
             for j in range(0,filledinmatrix.shape[1]):
@@ -136,8 +137,6 @@ def imputesvd(matrix):
 def imputeals(matrix):
     copyofmatrix = matrix.copy()
     nanprofile = getnanprofile(matrix)
-
-
     return None
 
 #preprocessing/CSDataFile_ForParry_2014Nov26_grademat.npy EIG
@@ -193,11 +192,12 @@ if __name__ == "__main__":
         t0 = time.time()
         filename = sys.argv[1]
         algorithm = sys.argv[2]
-        main(filename,algorithm) # main(["preprocessing/CSDataFile_ForParry_2014Nov26_grademat.npy","1400001"])
+        main(filename,algorithm) # main(["preprocessing/CSDataFile_ForParry_2014Nov26_grademat.npy","EIG"])
         t1 = time.time()
         totaltime = t1 - t0
-        print(colored("imputemat =~> " + str(totaltime) + " seconds.","yellow"))
-    except:
+        print(colored("imputemat ~=> " + str(totaltime) + " seconds.","yellow"))
+    except IOError as e:
+        print e.strerror
         print usage
         exit(-1)
 

@@ -42,7 +42,7 @@ if __name__ == "__main__":
         main("preprocessing/CSDataFile_ForParry_2014Nov26_studentdict.json")
         t1 = time.time()
         totaltime = t1 - t0
-        print(colored("dict2hist =~> " + str(totaltime) + " seconds.","yellow"))
+        print(colored("dict2hist ~=> " + str(totaltime) + " seconds.","yellow"))
     except:
         print usage
         exit(-1)

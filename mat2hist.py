@@ -230,7 +230,7 @@ if __name__ == "__main__":
         main(matrixfile,entrykey) # main(["preprocessing/CSDataFile_ForParry_2014Nov26_grademat.npy","1400001"])
         t1 = time.time()
         totaltime = t1 - t0
-        print(colored("mat2hist =~> " + str(totaltime) + " seconds.","yellow"))
+        print(colored("mat2hist ~=> " + str(totaltime) + " seconds.","yellow"))
     except:
         print usage
         exit(-1)

@@ -108,7 +108,7 @@ if __name__ == "__main__":
         main(input_filename) # main("CSDataFile_ForParry_2014Nov26.csv")
         t1 = time.time()
         totaltime = t1 - t0
-        print(colored("csv2dict =~> " + str(totaltime) + " seconds.","yellow"))
+        print(colored("csv2dict ~=> " + str(totaltime) + " seconds.","yellow"))
     except:
         print usage
         sys.exit(-1)
