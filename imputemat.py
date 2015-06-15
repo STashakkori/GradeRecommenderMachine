@@ -5,6 +5,7 @@
                    passed in as command line arguments. The arguments can specify a particular algorithm that is used.
                    Algorithms include the following: MEAN, EIG, SVD, ALS.
 """
+import nose
 
 __author__ = 'sina'
 __project__ = 'STProject'
@@ -21,21 +22,68 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 import math
 import sys
+import pprint
 
-'''
+"""
     main - main method of the imputemat program.
         :param argv1: command line argument -> the filename for the .npy matrix in memory.
         :type argv1: string
         :param argv2: command line argument -> the flag that specifies what imputation algorithm to use.
         :type argv2: string
-'''
+"""
 def main(argv1,argv2):
     colorama.init(autoreset=True)
     print(colored("imputemat","blue"))
     import Recommender
-    testmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv")
-    imputedmatrix = imputeeig(testmatrix,len(testmatrix)-1)
-    #imputedmatrix = imputeeig(testmatrix,0)
+    #testmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv")
+
+    """
+    import matrixfunctions
+    filledinmatrix = imputecolmean(testmatrix)
+    print filledinmatrix
+    u,s,v = numpy.linalg.svd(testmatrix,full_matrices=False)
+    print u.shape
+    print s.shape
+    print v.shape
+    newmatrix = numpy.dot(u[:,:2],numpy.dot(numpy.diag(s[:2]),v[:2,:]))
+    print "HERE"
+    print newmatrix[0][0]
+    print filledinmatrix[0][0]
+    print type(newmatrix[0][0])
+    print type(filledinmatrix[0][0])
+    print (newmatrix[0][0] == filledinmatrix[0][0])
+    print (round(newmatrix[0][0],3) == round(filledinmatrix[0][0],3))
+    print "HERE"
+    nose.tools.assert_almost_equal(newmatrix[0][0],filledinmatrix[0][0])
+    print (11.694 == 11.694)
+    print matrixfunctions.matrixequality(newmatrix,filledinmatrix)
+    print newmatrix
+    temp = s.reshape(s.size,1)
+    print temp.T
+    """
+
+    #testmatrix = loadmatrixfrommemory(argv1)
+    #filledinmatrix = imputecolmean(testmatrix)
+    #meancopy = testmatrix.mean(axis=0)
+    #meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
+    #u,s,v = numpy.linalg.svd(meansubtracted,full_matrices=False)
+
+    examplematrix = numpy.matrix([[1,2], [3,4],[4,5],[6,7]])
+    u,s,v = numpy.linalg.svd(examplematrix,full_matrices=False)
+    print u.shape
+    print s.shape
+    print v.shape
+    s = numpy.diag(s)
+    test = numpy.dot(u,numpy.dot(s,v))
+    print test
+    print examplematrix
+    print numpy.array_equal(test,examplematrix)
+    k = examplematrix.shape[1] - 1
+    test2 = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
+    print test2
+    print numpy.array_equal(test,examplematrix)
+
+    #imputedmatrix = imputepca(testmatrix,testmatrix.shape[1])
 
     if argv1 and argv1.endswith(".npy"):
         sparsematrix = loadmatrixfrommemory(argv1)
@@ -54,7 +102,6 @@ def main(argv1,argv2):
         else:
             print(colored("mat2hist ==> ERROR --> Invalid Algorithm Option ~~> ROWMEAN, COLMEAN, EIG, SVD, or ALS required","red"))
 
-        print imputedmatrix
         #storematrixinmemory(argv1,imputedmatrix)
 
     else:
@@ -77,7 +124,51 @@ def imputerowmean(matrix):
                 matrix[i,j] = mean[i]
     return matrix
 
-def imputeeig(matrix,k):
+def imputepca(matrix,k):
+    copyofmatrix = matrix.copy()
+    nanprofile = getnanprofile(matrix)
+    filledinmatrix = imputecolmean(copyofmatrix)
+
+    for i in range(0,100):
+        mean = filledinmatrix.mean(axis=0)
+        meancopy = filledinmatrix.mean(axis=0)
+        meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
+        u,s,v = numpy.linalg.svd(meansubtracted,full_matrices=False)
+        k -= 1
+        newmatrix = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
+        #newmatrix = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
+
+        for i in range(0,newmatrix.shape[1]):
+            newmatrix[:,i] += mean[i]
+
+        print rootmeansquared(matrix,newmatrix)
+
+        for i in range(0,filledinmatrix.shape[0]):
+            for j in range(0,filledinmatrix.shape[1]):
+                if nanprofile[i,j] == 1:
+                    filledinmatrix[i,j] = newmatrix[i,j]
+
+    return filledinmatrix
+
+def imputesvd(matrix,k):
+    copyofmatrix = matrix.copy()
+    nanprofile = getnanprofile(matrix)
+    filledinmatrix = imputecolmean(copyofmatrix)
+
+    for i in range(0,100):
+        u,s,v = numpy.linalg.svd(filledinmatrix)
+        newmatrix = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
+
+        print rootmeansquared(matrix,newmatrix)
+
+        for i in range(0,filledinmatrix.shape[0]):
+            for j in range(0,filledinmatrix.shape[1]):
+                if nanprofile[i,j] == 1:
+                    filledinmatrix[i,j] = newmatrix[i,j]
+
+    return filledinmatrix
+
+def imputeeigfull(matrix):
     copyofmatrix = matrix.copy()
     nanprofile = getnanprofile(matrix)
     filledinmatrix = imputecolmean(copyofmatrix)
@@ -105,7 +196,7 @@ def imputeeig(matrix,k):
 
     return filledinmatrix
 
-def imputesvd(matrix):
+def imputesvdfull(matrix):
     copyofmatrix = matrix.copy()
     nanprofile = getnanprofile(matrix)
     filledinmatrix = imputecolmean(copyofmatrix)

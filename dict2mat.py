@@ -30,9 +30,9 @@ def main(argv):
     print(colored("dict2mat","blue"))
     if argv and argv.endswith(".json"):
         studentmap = loadjson(argv)
-        g,d,c,sv,sm,ae,am,m1,m2,m3,h = convertdictionarytomatrix(studentmap)
-        g,d,c,sv,sm,ae,am,m1,m2,m3,h = pruneemptycolumns(g,d,c,sv,sm,ae,am,m1,m2,m3,h)
-        storematrixandlistsinmemory(g,d,c,sv,sm,ae,am,m1,m2,m3,h,argv)
+        g,d,c = convertdictionarytomatrix(studentmap)
+        g,d,c = pruneemptycolumns(g,d,c)
+        storematrixandlistsinmemory(g,d,c,argv)
 
     else:
         print(colored("dict2mat ==> ERROR --> Bad filename input ~~> .json required","red"))
@@ -60,19 +60,9 @@ def convertdictionarytomatrix(dictionary):
     columns = max(len(dictionary[x]) for x in dictionary.keys())
     dummieidgrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
     coursegrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    satvgrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    satmgrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    actenggrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    actmatgrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    mathplm1grid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    mathplm2grid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    mathplm3grid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    hsgpagrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-
     gradematrix = numpy.empty([rows + 1, columns + 1])
     gradematrix[:] = numpy.NAN
     rowcount = 0
-    testcount = 0
 
     for dummieid in dictionary:
         columncount = 0
@@ -80,7 +70,11 @@ def convertdictionarytomatrix(dictionary):
             # Grab the lowest grade out of dictionary entry.
             temp = float('inf')
             for value in dictionary[dummieid][activity]:
-                if value in twelvepointgrademap and twelvepointgrademap[value] < temp:
+                if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
+                    temp = value
+                    break
+
+                elif value in twelvepointgrademap and twelvepointgrademap[value] < temp:
                     temp = twelvepointgrademap[value]
 
             if temp == float('inf'):
@@ -92,38 +86,14 @@ def convertdictionarytomatrix(dictionary):
             coursegrid[rowcount][columncount] = activity
             gradematrix[rowcount][columncount] = grade
 
-            if activity == "SATV_score":
-                satvgrid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
-            if activity == "SATM_score":
-                satmgrid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
-            if activity == "ACTEng_score":
-                actenggrid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
-            if activity == "ACTMat_score":
-                actmatgrid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
-            if activity == "MathPlacement_PLM1_Score":
-                mathplm1grid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
-            if activity == "MathPlacement_PLM2_Score":
-                mathplm2grid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
-            if activity == "MathPlacement_PLM3_Score":
-                mathplm3grid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
-            if activity == "HSGPA":
-                hsgpagrid[rowcount][0:columns+1] = [dictionary[dummieid][activity]] * (columns + 1)
-
             columncount += 1
         rowcount += 1
-    return gradematrix, dummieidgrid, coursegrid, satvgrid, satmgrid, actenggrid, actmatgrid, mathplm1grid, mathplm2grid, mathplm3grid, hsgpagrid
+    return gradematrix, dummieidgrid, coursegrid
 
 """
     pruneemptycolumns - method that removes columns that are populated entirely with NAN's
 """
-def pruneemptycolumns(gradematrix, dummieidgrid, coursegrid, satvgrid, satmgrid, actenggrid, actmatgrid, mathplm1grid, mathplm2grid, mathplm3grid, hsgpagrid):
+def pruneemptycolumns(gradematrix, dummieidgrid, coursegrid):
     validgradereference = numpy.zeros([len(gradematrix[0]),1])
     for i in range(0,gradematrix.shape[0]):
         for j in range(0,gradematrix.shape[1]):
@@ -132,14 +102,6 @@ def pruneemptycolumns(gradematrix, dummieidgrid, coursegrid, satvgrid, satmgrid,
 
     dummieidgrid = transpose(removeblankrows(transpose(dummieidgrid)))
     coursegrid = transpose(removeblankrows(transpose(coursegrid)))
-    satvgrid = transpose(removeblankrows(transpose(satvgrid)))
-    satmgrid = transpose(removeblankrows(transpose(satmgrid)))
-    actenggrid = transpose(removeblankrows(transpose(actenggrid)))
-    actmatgrid = transpose(removeblankrows(transpose(actmatgrid)))
-    mathplm1grid = transpose(removeblankrows(transpose(mathplm1grid)))
-    mathplm2grid = transpose(removeblankrows(transpose(mathplm2grid)))
-    mathplm3grid = transpose(removeblankrows(transpose(mathplm3grid)))
-    hsgpagrid = transpose(removeblankrows(transpose(hsgpagrid)))
 
     zerolist,nonzerobool = numpy.where(validgradereference == 0)
     zeroarray = numpy.array(zerolist)
@@ -147,7 +109,7 @@ def pruneemptycolumns(gradematrix, dummieidgrid, coursegrid, satvgrid, satmgrid,
         gradematrix = numpy.delete(gradematrix,zeroarray[i],1)
         zeroarray = zeroarray - 1
 
-    return gradematrix, dummieidgrid, coursegrid, satvgrid, satmgrid, actenggrid, actmatgrid, mathplm1grid, mathplm2grid, mathplm3grid, hsgpagrid
+    return gradematrix, dummieidgrid, coursegrid
 
 """
     transpose - method that transposes a 2d list datastructure.
@@ -164,18 +126,10 @@ def removeblankrows(grid):
 """
     storematrixandlistsinmemory - method that stores gradematrix, dummieidgrid, and coursegrid into memory.
 """
-def storematrixandlistsinmemory(gradematrix, dummieidgrid, coursegrid, satvgrid, satmgrid, actenggrid, actmatgrid, mathplm1grid, mathplm2grid, mathplm3grid, hsgpagrid, filename):
+def storematrixandlistsinmemory(gradematrix, dummieidgrid, coursegrid, filename):
         gradematrixname = os.path.splitext(filename)[0].replace("_studentdict","") + "_grademat.npy"
         dummieidgridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_dummieidgrid.cPickle"
         coursegridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_coursegrid.cPickle"
-        satvgridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_satvgrid.cPickle"
-        satmgridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_satmgrid.cPickle"
-        actenggridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_actenggrid.cPickle"
-        actmatgridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_actmatgrid.cPickle"
-        mathplm1gridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_mathplm1grid.cPickle"
-        mathplm2gridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_mathplm2grid.cPickle"
-        mathplm3gridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_mathplm3grid.cPickle"
-        hsgpagridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_hsgpagrid.cPickle"
         numpy.save(gradematrixname,gradematrix)
         print(colored("dict2mat ==> SUCCESS --> " + gradematrixname + " file written.","cyan"))
 
@@ -188,46 +142,6 @@ def storematrixandlistsinmemory(gradematrix, dummieidgrid, coursegrid, satvgrid,
         cPickle.dump(coursegrid,file,protocol=2)
         file.close()
         print(colored("dict2mat ==> SUCCESS --> " + coursegridname + " file written.","cyan"))
-
-        file = open(satvgridname, "wb")
-        cPickle.dump(satvgrid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + satvgridname + " file written.","cyan"))
-
-        file = open(satmgridname, "wb")
-        cPickle.dump(satmgrid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + satmgridname + " file written.","cyan"))
-
-        file = open(actenggridname, "wb")
-        cPickle.dump(actenggrid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + actenggridname + " file written.","cyan"))
-
-        file = open(actmatgridname, "wb")
-        cPickle.dump(actmatgrid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + actmatgridname + " file written.","cyan"))
-
-        file = open(mathplm1gridname, "wb")
-        cPickle.dump(mathplm1grid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + mathplm1gridname + " file written.","cyan"))
-
-        file = open(mathplm2gridname, "wb")
-        cPickle.dump(mathplm2grid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + mathplm2gridname + " file written.","cyan"))
-
-        file = open(mathplm3gridname, "wb")
-        cPickle.dump(mathplm3grid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + mathplm3gridname + " file written.","cyan"))
-
-        file = open(hsgpagridname, "wb")
-        cPickle.dump(hsgpagrid,file,protocol=2)
-        file.close()
-        print(colored("dict2mat ==> SUCCESS --> " + hsgpagridname + " file written.","cyan"))
 
 if __name__ == "__main__":
     usage = colored("dict2mat ==> ERROR --> Improper command line arguments ~~> Usage : python dict2mat.py <dictionary.json> ","red")
