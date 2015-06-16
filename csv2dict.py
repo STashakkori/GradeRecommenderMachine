@@ -62,27 +62,29 @@ def parsecsvtodictionary(filename):
 
     for i in range(1,len(pieces)):
         studentdictionary[pieces[i][0]] = {}
+        studentid = pieces[i][0]
+
         for j in range(1,len(pieces[i])):
-            if(pieces[i][j].strip('\r').strip('\n') and not re.match(graderegex,pieces[0][j]) and not re.match(gradegparegex,pieces[0][j])):
-                if pieces[0][j] not in activitydictionary: activitydictionary[pieces[0][j]] = {}
+
+            activityid = pieces[0][j].strip('\r').strip('\n')
+            cell = pieces[i][j].strip('\r').strip('\n')
+
+            if(cell and not re.match(graderegex,activityid) and not re.match(gradegparegex,activityid)):
+                if activityid not in activitydictionary: activitydictionary[activityid] = {}
 
                 # if it's a course, then we want to make that the key and grab it's grade and insert that as the value
-                if(re.match(courseregex,pieces[0][j])):
-                    studentdictionary[pieces[i][0]].setdefault(pieces[i][j].strip('\r').strip('\n'),[])
-                    studentdictionary[pieces[i][0]][pieces[i][j]].append(pieces[i][j+131].strip('\r').strip('\n'))
-
-                    activitydictionary.setdefault(pieces[i][j].strip('\r').strip('\n'),{})
-                    activitydictionary[pieces[i][j].strip('\r').strip('\n')].setdefault(pieces[i][0],[])
-                    activitydictionary[pieces[i][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j+131].strip('\r').strip('\n'))
+                if(re.match(courseregex,activityid)):
+                    course = cell
+                    grade = pieces[i][j+131].strip('\r').strip('\n')
+                    studentdictionary[studentid].setdefault(course,[]).append(grade)
+                    activitydictionary.setdefault(course,{})
+                    activitydictionary[course].setdefault(studentid,[]).append(grade)
 
                 # otherwise, use the column header as the key and just insert the csv entry as the value
                 else:
-                    studentdictionary[pieces[i][0]].setdefault(pieces[0][j].strip('\r').strip('\n'),[])
-                    studentdictionary[pieces[i][0]][pieces[0][j]].append(pieces[i][j].strip('\r').strip('\n'))
-
-                    activitydictionary[pieces[0][j].strip('\r').strip('\n')].setdefault(pieces[i][0],[])
-                    activitydictionary[pieces[0][j].strip('\r').strip('\n')][pieces[i][0]].append(pieces[i][j].strip('\r').strip('\n'))
-
+                    score = cell
+                    studentdictionary[studentid].setdefault(activityid,[]).append(score)
+                    activitydictionary[activityid].setdefault(studentid,[]).append(score)
                 file.close()
     return studentdictionary,activitydictionary
 

@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 import math
 import sys
+import sklearn.decomposition as skd
 import pprint
 
 """
@@ -67,22 +68,32 @@ def main(argv1,argv2):
     #meancopy = testmatrix.mean(axis=0)
     #meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
     #u,s,v = numpy.linalg.svd(meansubtracted,full_matrices=False)
-
-    examplematrix = numpy.matrix([[1,2], [3,4],[4,5],[6,7]])
+    """
+    examplematrix = numpy.matrix([[1.0,2.0], [3.0,4.0],[4.0,5.0],[6.0,7.0]])
     u,s,v = numpy.linalg.svd(examplematrix,full_matrices=False)
+    temp = numpy.diag(s)
+    test1 = numpy.dot(u,numpy.dot(temp,v))
+    print test1
+    print numpy.allclose(examplematrix,test1)
     print u.shape
     print s.shape
     print v.shape
-    s = numpy.diag(s)
-    test = numpy.dot(u,numpy.dot(s,v))
-    print test
+    print s
     print examplematrix
-    print numpy.array_equal(test,examplematrix)
-    k = examplematrix.shape[1] - 1
+    k = examplematrix.shape[1]
+    print u[:,:k]
+    print s[:k]
+    print v[:k,:]
     test2 = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
     print test2
-    print numpy.array_equal(test,examplematrix)
+    print numpy.allclose(examplematrix,test2)
+    """
+    testmatrix = loadmatrixfrommemory(argv1) # refactor to say loadmatrixfromdisk
 
+    #numpy.savetxt("matrixfordrparry.csv", testmatrix, delimiter=",")
+    #pca = skd.SparsePCA(testmatrix.shape[1])
+    #imputedmatrix2 = pca.fit(testmatrix)
+    #print imputedmatrix2
     #imputedmatrix = imputepca(testmatrix,testmatrix.shape[1])
 
     if argv1 and argv1.endswith(".npy"):
@@ -134,17 +145,18 @@ def imputepca(matrix,k):
         meancopy = filledinmatrix.mean(axis=0)
         meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
         u,s,v = numpy.linalg.svd(meansubtracted,full_matrices=False)
-        k -= 1
         newmatrix = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
-        #newmatrix = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
+        print numpy.allclose(meansubtracted,newmatrix)
 
         for i in range(0,newmatrix.shape[1]):
             newmatrix[:,i] += mean[i]
 
+        print numpy.allclose(meansubtracted,newmatrix)
+        print numpy.allclose(filledinmatrix,newmatrix)
         print rootmeansquared(matrix,newmatrix)
 
         for i in range(0,filledinmatrix.shape[0]):
-            for j in range(0,filledinmatrix.shape[1]):
+            for j in range(0,k):
                 if nanprofile[i,j] == 1:
                     filledinmatrix[i,j] = newmatrix[i,j]
 
