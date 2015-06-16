@@ -90,11 +90,11 @@ def convertdictionarytomatrix(studentdictionary,activitydictionary):
             else:
                 grade = temp
 
-            dummieidgrid[rowcount][columncount] = dummieid
-            activitygrid[rowcount][columncount] = activity
-            gradematrix[rowcount][columncount] = grade
+            dummieidgrid[rowcount][index] = dummieid
+            activitygrid[rowcount][index] = activity
+            gradematrix[rowcount][index] = grade
 
-            columncount += 1
+            #columncount += 1
         rowcount += 1
     return gradematrix, dummieidgrid, activitygrid
 
