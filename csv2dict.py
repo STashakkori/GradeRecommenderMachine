@@ -63,12 +63,9 @@ def parsecsvtodictionary(filename):
     for i in range(1,len(pieces)):
         studentdictionary[pieces[i][0]] = {}
         studentid = pieces[i][0]
-
         for j in range(1,len(pieces[i])):
-
             activityid = pieces[0][j].strip('\r').strip('\n')
             cell = pieces[i][j].strip('\r').strip('\n')
-
             if(cell and not re.match(graderegex,activityid) and not re.match(gradegparegex,activityid)):
                 if activityid not in activitydictionary: activitydictionary[activityid] = {}
 

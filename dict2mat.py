@@ -72,7 +72,6 @@ def convertdictionarytomatrix(studentdictionary,activitydictionary):
     rowcount = 0
 
     for dummieid in studentdictionary:
-        columncount = 0
         for activity in studentdictionary[dummieid]:
             index = temporaryactivitymap[activity]
             # Grab the lowest grade out of dictionary entry.
@@ -93,8 +92,6 @@ def convertdictionarytomatrix(studentdictionary,activitydictionary):
             dummieidgrid[rowcount][index] = dummieid
             activitygrid[rowcount][index] = activity
             gradematrix[rowcount][index] = grade
-
-            #columncount += 1
         rowcount += 1
     return gradematrix, dummieidgrid, activitygrid
 
