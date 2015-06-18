@@ -19,6 +19,7 @@ import json
 import math
 import time
 import sys
+from collections import OrderedDict
 
 """
     main - main method of the dict2mat program.
@@ -31,9 +32,9 @@ def main(argv,argv2):
     if argv and argv.endswith(".json"):
         studentmap = loadjson(argv)
         activitymap = loadjson(argv2)
-        g,d,c = convertdictionarytomatrix(studentmap,activitymap)
-        g,d,c = pruneemptycolumns(g,d,c)
-        storematrixandlistsinmemory(g,d,c,argv)
+        g,d,c,s,a = convertdictionariestomatrices(studentmap,activitymap)
+        g,d,c,s,a = pruneemptycolumns(g,d,c)
+        storenewdatastructuresinmemory(g,d,c,argv)
 
     else:
         print(colored("dict2mat ==> ERROR --> Bad filename input ~~> .json required","red"))
@@ -55,50 +56,60 @@ def loadjson(filename):
                                 Dummieidgrid and activitygrid have the same dimensions as gradematrix and have an element
                                 to element correspondence.
 """
-def convertdictionarytomatrix(studentdictionary,activitydictionary):
+def convertdictionariestomatrices(studentdictionary,activitydictionary):
     twelvepointgrademap = {"A":12.0,"A-":11.0,"B+":10.0,"B":9.0,"B-":8.0,"C+":7.0,"C":6.0,"C-":5.0,"D+":4.0,"D":3.0,"D-":2.0,"F":0.0}
     rows = len(studentdictionary.keys())
-    #columns = max(len(studentdictionary[x]) for x in studentdictionary.keys()) #Change this to be the number of keys in activitydictionary i.e. the number of unique activities.
     columns = len(activitydictionary.keys())
-    temporaryactivitymap = {}
-    temporarykeycount = 0
+    activityindexmap,studentindexmap = OrderedDict
+    activitykeycount,studentkeycount = 0
     for key in activitydictionary.keys():
-        temporaryactivitymap[key] = temporarykeycount
-        temporarykeycount += 1
-    dummieidgrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    activitygrid = [[None for x in range(columns + 1)] for x in range(rows + 1)]
-    gradematrix = numpy.empty([rows + 1, columns + 1])
+        activityindexmap[key] = activitykeycount
+        activitykeycount += 1
+
+    activitylabels = list(activityindexmap)
+
+    for key in studentdictionary.keys():
+        studentindexmap[key] = studentkeycount
+        studentkeycount += 1
+
+    #dummieidgrid = [[None for x in range(columns)] for x in range(rows)]
+    #activitygrid = [[None for x in range(columns)] for x in range(rows)]
+    gradematrix = numpy.empty([rows,columns])
     gradematrix[:] = numpy.NAN
-    rowcount = 0
+    rowindex = 0
 
     for dummieid in studentdictionary:
         for activity in studentdictionary[dummieid]:
-            index = temporaryactivitymap[activity]
+            columnindex = activityindexmap[activity]
             # Grab the lowest grade out of dictionary entry.
-            temp = float('inf')
+            mingrade = float('inf')
             for value in studentdictionary[dummieid][activity]:
                 if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
-                    temp = value
-                    break
+                    mingrade = value
 
-                elif value in twelvepointgrademap and twelvepointgrademap[value] < temp:
-                    temp = twelvepointgrademap[value]
+                elif value in twelvepointgrademap and twelvepointgrademap[value] < mingrade:
+                    mingrade = twelvepointgrademap[value]
 
-            if temp == float('inf'):
+                else:
+                    badgradelist = ["NG","NR","IE","WC","*F","CR"]
+                    if not value in badgradelist:
+                        print "Unknown grade: " + value
+
+            if mingrade == float('inf'):
                 grade = numpy.NAN
             else:
-                grade = temp
-
-            dummieidgrid[rowcount][index] = dummieid
-            activitygrid[rowcount][index] = activity
-            gradematrix[rowcount][index] = grade
-        rowcount += 1
-    return gradematrix, dummieidgrid, activitygrid
+                # dummieidgrid[rowindex][columnindex] = dummieid
+                # activitygrid[rowindex][columnindex] = activity
+                grade = mingrade
+            gradematrix[rowindex][columnindex] = grade
+        rowindex += 1
+    return gradematrix, activityindexmap, studentindexmap
+    #return gradematrix, dummieidgrid, activitygrid, activityindexmap, studentindexmap
 
 """
     pruneemptycolumns - method that removes columns that are populated entirely with NAN's
 """
-def pruneemptycolumns(gradematrix, dummieidgrid, activitygrid):
+def pruneemptycolumns(gradematrix, dummieidgrid, activitygrid, activityindexmap, studentindexmap):
     validgradereference = numpy.zeros([len(gradematrix[0]),1])
     for i in range(0,gradematrix.shape[0]):
         for j in range(0,gradematrix.shape[1]):
@@ -110,10 +121,17 @@ def pruneemptycolumns(gradematrix, dummieidgrid, activitygrid):
 
     zerolist,nonzerobool = numpy.where(validgradereference == 0)
     zeroarray = numpy.array(zerolist)
+    activityindexlist = list(activityindexmap)
+    studentindexlist = list(studentindexmap)
     for i in range(len(zeroarray)):
         gradematrix = numpy.delete(gradematrix,zeroarray[i],1)
+        savedelement1 = activityindexlist[zeroarray[i]]
+        del activityindexlist[zeroarray[i]]
+        activityindexmap.pop(savedelement1)
+        savedelement2 = studentindexlist[zeroarray[i]]
+        del studentindexlist[zeroarray[i]]
+        studentindexmap.pop(savedelement2)
         zeroarray = zeroarray - 1
-
     return gradematrix, dummieidgrid, activitygrid
 
 """
@@ -131,10 +149,13 @@ def removeblankrows(grid):
 """
     storematrixandlistsinmemory - method that stores gradematrix, dummieidgrid, and activitygrid into memory.
 """
-def storematrixandlistsinmemory(gradematrix, dummieidgrid, activitygrid, filename):
+def storenewdatastructuresinmemory(gradematrix, dummieidgrid, activitygrid, filename):
         gradematrixname = os.path.splitext(filename)[0].replace("_studentdict","") + "_grademat.npy"
         dummieidgridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_dummieidgrid.cPickle"
         activitygridname = os.path.splitext(filename)[0].replace("_studentdict","") + "_activitygrid.cPickle"
+        studentindexmapname = os.path.splitext(filename)[0].replace("_studentdict","") + "_activityindexmap.json"
+        activityindexmapname = os.path.splitext(filename)[0].replace("_studentdict","") + "_studentindexmap.json"
+
         numpy.save(gradematrixname,gradematrix)
         print(colored("dict2mat ==> SUCCESS --> " + gradematrixname + " file written.","cyan"))
 
@@ -147,6 +168,12 @@ def storematrixandlistsinmemory(gradematrix, dummieidgrid, activitygrid, filenam
         cPickle.dump(activitygrid,file,protocol=2)
         file.close()
         print(colored("dict2mat ==> SUCCESS --> " + activitygridname + " file written.","cyan"))
+
+        file = open("preprocessing/" + filename, "wb")
+        json.dump(dictionary,file)
+        file.close()
+        print(colored("csv2dict ==> SUCCESS --> " + filename + " file written to the preprocessing directory.","cyan"))
+
 
 if __name__ == "__main__":
     usage = colored("dict2mat ==> ERROR --> Improper command line arguments ~~> Usage : python dict2mat.py <dictionary.json> ","red")

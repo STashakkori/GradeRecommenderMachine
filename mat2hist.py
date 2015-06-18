@@ -56,7 +56,7 @@ def main(argv1,argv2):
 def loaddatastructures(matrixfilename):
     gradematrix = numpy.load(matrixfilename)
     dummieidgrid = loadcpickle(matrixfilename.replace("_grademat.npy","_dummieidgrid.cPickle"))
-    coursegrid = loadcpickle(matrixfilename.replace("_grademat.npy","_coursegrid.cPickle"))
+    coursegrid = loadcpickle(matrixfilename.replace("_grademat.npy","_activitygrid.cPickle"))
     return gradematrix,dummieidgrid,coursegrid
 
 """
@@ -72,7 +72,7 @@ def loadcpickle(filename):
     getentry - method that uses the dummieid or coursename commandline argument to retrieve a single row from the grade
                matrix. That row is then returned.
 """
-def getentry(grademat,dummieidgrid,coursegrid,input):
+def getentry(grademat,dummieidgrid,activitygrid,input):
     templist = numpy.empty(0)
     for i in range(0,len(dummieidgrid)):
         for j in range(0,len(dummieidgrid[i])):
@@ -80,7 +80,7 @@ def getentry(grademat,dummieidgrid,coursegrid,input):
                 for x in grademat[i]: templist = numpy.append(templist,x)
                 return templist,"student"
 
-            elif coursegrid[i][j] == input:
+            elif activitygrid[i][j] == input:
                 templist = numpy.append(templist,grademat[i][j])
     return templist,"course"
 
@@ -169,7 +169,8 @@ def plothistogram(matrix,flag,title):
 def countsmapper(list):
         countmap = OrderedDict([("A",0),("A-",0),("B+",0),("B",0),("B-",0),("C+",0),("C",0),("C-",0),("D+",0),("D",0),("D-",0),("F",0)])
         for item in list:
-                countmap[item] = countmap.setdefault(item, 0) + 1
+            if item in countmap:
+                countmap[item] += 1
 
         return countmap
 
@@ -231,6 +232,7 @@ if __name__ == "__main__":
         t1 = time.time()
         totaltime = t1 - t0
         print(colored("mat2hist ~=> " + str(totaltime) + " seconds.","yellow"))
-    except:
+    except IOError as e:
+        print e.strerror
         print usage
         exit(-1)
