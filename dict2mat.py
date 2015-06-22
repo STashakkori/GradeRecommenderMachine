@@ -95,8 +95,7 @@ def convertdictionariestomatrices(studentdictionary,activitydictionary):
                 grade = mingrade
             gradematrix[rowindex][columnindex] = grade
         rowindex += 1
-
-        numpy.set_printoptions(threshold='nan')
+        #numpy.set_printoptions(threshold='nan')
     return gradematrix, dummieidlabels, activitylabels
 
 """
@@ -106,7 +105,6 @@ def createmapsfromlabels(list):
     map = {}
     for i in range(0,len(list)):
         map[list[i]] = i
-
     return map
 
 """
@@ -120,11 +118,18 @@ def pruneemptycolumns(gradematrix, dummieidlabels, activitylabels):
     for i in range(0,gradematrix.shape[0]):
         for j in range(0,gradematrix.shape[1]):
             if not math.isnan(gradematrix[i][j]):
-                validgradereference[j] = validgradereference[j] + 1
+                validgradereference[j] += 1
 
-    zerolist,nonzerobool = numpy.where(validgradereference == 0)
+
+    zerolist = validgradereference[numpy.where(validgradereference == 0)]
+    print zerolist
+    print "zerolist.shape"
+    print zerolist.shape
     gradematrix = numpy.delete(gradematrix,zerolist,1)
-
+    print zerolist
+    print "activitylabels.shape"
+    print len(activitylabels[0])
+    print len(activitylabels)
     activitylabels = numpy.array(activitylabels)
     numpy.delete(activitylabels,zerolist,1)
 
