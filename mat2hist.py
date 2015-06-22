@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 import math
 import sys
+import json
 
 '''
     main - main method of the mat2hist program.
@@ -34,9 +35,15 @@ def main(argv1,argv2):
     print(colored("mat2hist","blue"))
     if argv1 and argv1.endswith(".npy"):
         if argv2:
-            g,d,c = loaddatastructures(argv1)
-            entry,flag = getentry(g,d,c,argv2)
+            g,d,a,dm,am = loaddatastructures(argv1)
+            print g.shape
+            print d
+            print a
+            print dm
+            print am
+            entry,flag = getentry(g,d,a,dm,am,argv2)
             if entry.any():
+                print entry
                 plothistogram(entry,flag,argv2)
 
             else:
@@ -55,9 +62,20 @@ def main(argv1,argv2):
 """
 def loaddatastructures(matrixfilename):
     gradematrix = numpy.load(matrixfilename)
-    dummieidgrid = loadcpickle(matrixfilename.replace("_grademat.npy","_dummieidgrid.cPickle"))
-    coursegrid = loadcpickle(matrixfilename.replace("_grademat.npy","_activitygrid.cPickle"))
-    return gradematrix,dummieidgrid,coursegrid
+    dummieidlabels = numpy.load(matrixfilename.replace("_grademat.npy","_dummieidlabels.npy"))
+    activitylabels = numpy.load(matrixfilename.replace("_grademat.npy","_activitylabels.npy"))
+    dummieidlabelsmap = loadjson(matrixfilename.replace("_grademat.npy","_dummieidlabelsmap.json"))
+    activitylabelsmap = loadjson(matrixfilename.replace("_grademat.npy","_activitylabelsmap.json"))
+    return gradematrix,dummieidlabels,activitylabels,dummieidlabelsmap,activitylabelsmap
+
+"""
+    loadjson - method that loads a json object from memory and returns it.
+"""
+def loadjson(filename):
+        f = open(filename,"rb")
+        j = json.loads(open(filename).read())
+        f.close()
+        return j
 
 """
     loadcpickle - method that loads a .cPickle file from memory into a datastructure and returns it.
@@ -72,17 +90,25 @@ def loadcpickle(filename):
     getentry - method that uses the dummieid or coursename commandline argument to retrieve a single row from the grade
                matrix. That row is then returned.
 """
-def getentry(grademat,dummieidgrid,activitygrid,input):
+def getentry(grademat,dummieidlabels,activitylabels,dummieidlabelsmap,activitylabelsmap,input):
     templist = numpy.empty(0)
-    for i in range(0,len(dummieidgrid)):
-        for j in range(0,len(dummieidgrid[i])):
-            if dummieidgrid[i][j] == input:
-                for x in grademat[i]: templist = numpy.append(templist,x)
-                return templist,"student"
+    if input in dummieidlabelsmap:
+        index = dummieidlabelsmap[input]
+        print index
+        print grademat[index]
+        for x in grademat[index]:
+            if not numpy.isnan(x):
+                templist = numpy.append(templist,x)
+                print x
+        return templist,"dummieid"
 
-            elif activitygrid[i][j] == input:
-                templist = numpy.append(templist,grademat[i][j])
-    return templist,"course"
+    elif input in activitylabelsmap:
+        index = activitylabelsmap[input]
+        for j in range(0,grademat.shape[0]):
+            if not numpy.isnan(grademat[j][index]): templist = numpy.append(templist,grademat[j][index])
+        return templist,"activity"
+
+    else: return None
 
 def calculatemode(matrix):
     if matrix.shape[0] == 1: return matrix[0]
@@ -145,7 +171,7 @@ def plothistogram(matrix,flag,title):
     plt.ylabel('Occurrences')
     plt.gca().set_position((.1, .3, .8, .6))
     plt.figtext(.04,.19,"Number of records: " + str(records), fontsize=10)
-    if flag == "course":
+    if flag == "activity":
         plt.figtext(.04,.16,"Number of students: " + str(students), fontsize=10)
     else:
         plt.figtext(.04,.16,"Number of courses taken: " + str(students), fontsize=10)

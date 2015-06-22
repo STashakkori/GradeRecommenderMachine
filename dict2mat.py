@@ -34,16 +34,9 @@ def main(argv,argv2):
         studentmap = loadjson(argv)
         activitymap = loadjson(argv2)
         g,d,a = convertdictionariestomatrices(studentmap,activitymap)
-        print g.shape
-        print len(d)
-        print len(a)
-        print "============"
-        g,d,a = pruneemptycolumns(g,d,a)
-        print g.shape
-        print len(d)
-        print len(a)
-        exit(1)
-        storenewdatastructuresinmemory(g,d,a,argv)
+        g,a = pruneemptycolumns(g,a)
+        dm,am = createmapsfromlabels(d,a)
+        storenewdatastructuresinmemory(g,d,a,dm,am,argv)
 
     else:
         print(colored("dict2mat ==> ERROR --> Bad filename input ~~> .json required","red"))
@@ -78,6 +71,7 @@ def convertdictionariestomatrices(studentdictionary,activitydictionary):
     rowindex = 0
 
     for dummieid in studentdictionary:
+        rowindex = dummieidlabels.index(dummieid)
         for activity in studentdictionary[dummieid]:
             columnindex = activitylabels.index(activity)
             # Grab the lowest grade out of dictionary entry.
@@ -94,51 +88,36 @@ def convertdictionariestomatrices(studentdictionary,activitydictionary):
             else:
                 grade = mingrade
             gradematrix[rowindex][columnindex] = grade
-        rowindex += 1
-        #numpy.set_printoptions(threshold='nan')
     return gradematrix, dummieidlabels, activitylabels
 
 """
     createmapfromlabel - method that converts a enumerated map from a list.
 """
-def createmapsfromlabels(list):
-    map = {}
-    for i in range(0,len(list)):
-        map[list[i]] = i
-    return map
+def createmapsfromlabels(list1,list2):
+    map1 = {}
+    map2 = {}
+    for index,item in enumerate(list1):
+        map1[item] = index
+
+    for index,item in enumerate(list2):
+        map2[item] = index
+
+    return map1,map2
 
 """
     pruneemptycolumns - method that removes columns that are populated entirely with NAN's
 """
-def pruneemptycolumns(gradematrix, dummieidlabels, activitylabels):
-    validgradereference = numpy.zeros([gradematrix.shape[1],1])
-    print "TESTING *****"
-    print len(validgradereference)
-    print len(activitylabels)
+def pruneemptycolumns(gradematrix, activitylabels):
+    validgradereference = numpy.zeros(gradematrix.shape[1])
     for i in range(0,gradematrix.shape[0]):
         for j in range(0,gradematrix.shape[1]):
             if not math.isnan(gradematrix[i][j]):
                 validgradereference[j] += 1
 
-
-    zerolist = validgradereference[numpy.where(validgradereference == 0)]
-    print zerolist
-    print "zerolist.shape"
-    print zerolist.shape
+    zerolist = numpy.where(validgradereference == 0.0)
     gradematrix = numpy.delete(gradematrix,zerolist,1)
-    print zerolist
-    print "activitylabels.shape"
-    print len(activitylabels[0])
-    print len(activitylabels)
-    activitylabels = numpy.array(activitylabels)
-    numpy.delete(activitylabels,zerolist,1)
-
-    """
-    for index in zerolist:
-        del activitylabels[index]
-        zerolist = zerolist - 1
-    """
-    return gradematrix, dummieidlabels, activitylabels
+    activitylabels = numpy.delete(activitylabels,zerolist,0)
+    return gradematrix, activitylabels
 
 """
     transpose - method that transposes a 2d list datastructure.
@@ -155,36 +134,31 @@ def removeblankrows(grid):
 """
     storematrixandlistsinmemory - method that stores gradematrix, dummieidgrid, and activitygrid into memory.
 """
-def storenewdatastructuresinmemory(gradematrix, dummieidlabels, activitylabels, filename):
+def storenewdatastructuresinmemory(gradematrix, dummieidlabels, activitylabels, dummieidlabelsmap, activitylabelsmap, filename):
         gradematrixname = os.path.splitext(filename)[0].replace("_studentdict","") + "_grademat.npy"
-        dummieidlabelsname = os.path.splitext(filename)[0].replace("_studentdict","") + "_dummieidlabels.cPickle"
-        activitylabelsname = os.path.splitext(filename)[0].replace("_studentdict","") + "_activitylabels.cPickle"
-        dummieidlabelsmapname = os.path.splitext(filename)[0].replace("_studentdict","") + "_activityindexmap.json"
-        activitylabelsmapname = os.path.splitext(filename)[0].replace("_studentdict","") + "_studentindexmap.json"
+        dummieidlabelsname = os.path.splitext(filename)[0].replace("_studentdict","") + "_dummieidlabels.npy"
+        activitylabelsname = os.path.splitext(filename)[0].replace("_studentdict","") + "_activitylabels.npy"
+        dummieidlabelsmapname = os.path.splitext(filename)[0].replace("_studentdict","") + "_dummieidlabelsmap.json"
+        activitylabelsmapname = os.path.splitext(filename)[0].replace("_studentdict","") + "_activitylabelsmap.json"
 
         numpy.save(gradematrixname,gradematrix)
         print(colored("dict2mat ==> SUCCESS --> " + gradematrixname + " file written to the preprocessing directory..","cyan"))
 
-        file = open(dummieidlabelsname, "wb")
-        cPickle.dump(dummieidlabels,file,protocol=2)
-        file.close()
+        numpy.save(dummieidlabelsname,dummieidlabels)
         print(colored("dict2mat ==> SUCCESS --> " + dummieidlabelsname + " file written to the preprocessing directory..","cyan"))
 
-        file = open(activitylabelsname, "wb")
-        cPickle.dump(activitylabels,file,protocol=2)
-        file.close()
+        numpy.save(activitylabelsname,activitylabels)
         print(colored("dict2mat ==> SUCCESS --> " + activitylabelsname + " file written to the preprocessing directory..","cyan"))
-        """
-        file = open("preprocessing/" + filename, "wb")
-        json.dump(dummieidlabelsmapname,file)
-        file.close()
-        print(colored("csv2dict ==> SUCCESS --> " + dummieidlabelsmapname + " file written to the preprocessing directory.","cyan"))
 
-        file = open("preprocessing/" + activitylabelsmapname, "wb")
-        json.dump(dummieidlabelsmapname,file)
+        file = open(dummieidlabelsmapname, "wb")
+        json.dump(dummieidlabelsmap,file)
         file.close()
-        print(colored("csv2dict ==> SUCCESS --> " + activitylabelsmapname + " file written to the preprocessing directory.","cyan"))
-        """
+        print(colored("dict2mat ==> SUCCESS --> " + dummieidlabelsmapname + " file written to the preprocessing directory.","cyan"))
+
+        file = open(activitylabelsmapname, "wb")
+        json.dump(activitylabelsmap,file)
+        file.close()
+        print(colored("dict2mat ==> SUCCESS --> " + activitylabelsmapname + " file written to the preprocessing directory.","cyan"))
 
 if __name__ == "__main__":
     usage = colored("dict2mat ==> ERROR --> Improper command line arguments ~~> Usage : python dict2mat.py <dictionary.json> ","red")
@@ -202,5 +176,5 @@ if __name__ == "__main__":
         print(colored("dict2mat ~=> " + str(totaltime) + " seconds.","yellow"))
     except IOError as e:
         print usage
-        print e.strerror
+        # print e.strerror
         exit(-1)
