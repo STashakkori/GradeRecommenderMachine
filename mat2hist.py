@@ -36,14 +36,8 @@ def main(argv1,argv2):
     if argv1 and argv1.endswith(".npy"):
         if argv2:
             g,d,a,dm,am = loaddatastructures(argv1)
-            print g.shape
-            print d
-            print a
-            print dm
-            print am
             entry,flag = getentry(g,d,a,dm,am,argv2)
             if entry.any():
-                print entry
                 plothistogram(entry,flag,argv2)
 
             else:
@@ -94,12 +88,9 @@ def getentry(grademat,dummieidlabels,activitylabels,dummieidlabelsmap,activityla
     templist = numpy.empty(0)
     if input in dummieidlabelsmap:
         index = dummieidlabelsmap[input]
-        print index
-        print grademat[index]
         for x in grademat[index]:
             if not numpy.isnan(x):
                 templist = numpy.append(templist,x)
-                print x
         return templist,"dummieid"
 
     elif input in activitylabelsmap:

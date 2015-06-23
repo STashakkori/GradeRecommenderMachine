@@ -63,6 +63,7 @@ def parsecsvtodictionary(filename):
     for i in range(1,len(pieces)):
         studentdictionary[pieces[i][0]] = {}
         studentid = pieces[i][0]
+        timeofactivitycounter = 0
         for j in range(1,len(pieces[i])):
             activityid = pieces[0][j].strip('\r').strip('\n')
             cell = pieces[i][j].strip('\r').strip('\n')
@@ -73,15 +74,16 @@ def parsecsvtodictionary(filename):
                 if(re.match(courseregex,activityid)):
                     course = cell
                     grade = pieces[i][j+131].strip('\r').strip('\n')
-                    studentdictionary[studentid].setdefault(course,[]).append(grade)
+                    studentdictionary[studentid].setdefault(course,[]).append((grade,timeofactivitycounter))
                     activitydictionary.setdefault(course,{})
-                    activitydictionary[course].setdefault(studentid,[]).append(grade)
+                    activitydictionary[course].setdefault(studentid,[]).append((grade,timeofactivitycounter))
+                    timeofactivitycounter += 1
 
                 # otherwise, use the column header as the key and just insert the csv entry as the value
                 else:
                     score = cell
-                    studentdictionary[studentid].setdefault(activityid,[]).append(score)
-                    activitydictionary[activityid].setdefault(studentid,[]).append(score)
+                    studentdictionary[studentid].setdefault(activityid,[]).append((score,))
+                    activitydictionary[activityid].setdefault(studentid,[]).append((score,))
                 file.close()
     return studentdictionary,activitydictionary
 
@@ -108,6 +110,7 @@ if __name__ == "__main__":
         t1 = time.time()
         totaltime = t1 - t0
         print(colored("csv2dict ~=> " + str(totaltime) + " seconds.","yellow"))
-    except:
+    except IOError as e:
         print usage
+        print e.strerror
         sys.exit(-1)

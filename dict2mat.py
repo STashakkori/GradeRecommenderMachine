@@ -52,7 +52,7 @@ def loadjson(filename):
         return j
 
 """
-    convertdictionarytomatrix - method that loops through a dictionary that is indexable by student and generates an
+    convertdictionariestomatrices - method that loops through a dictionary that is indexable by student and generates an
                                 equivalent 3 datastructures. Gradematrix is a numpy matrix of all the grades. Dummieidgrid
                                 is a 2d list that holds dummie ids. activitygrid is a 2d list that holds course names. Both
                                 Dummieidgrid and activitygrid have the same dimensions as gradematrix and have an element
@@ -68,7 +68,6 @@ def convertdictionariestomatrices(studentdictionary,activitydictionary):
     activitylabels.sort()
     gradematrix = numpy.empty([rows,columns])
     gradematrix[:] = numpy.NAN
-    rowindex = 0
 
     for dummieid in studentdictionary:
         rowindex = dummieidlabels.index(dummieid)
@@ -77,11 +76,12 @@ def convertdictionariestomatrices(studentdictionary,activitydictionary):
             # Grab the lowest grade out of dictionary entry.
             mingrade = float('inf')
             for value in studentdictionary[dummieid][activity]:
+                gradetuplepart = value[0]
                 if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
-                    mingrade = value
+                    mingrade = gradetuplepart
 
-                elif value in twelvepointgrademap and twelvepointgrademap[value] < mingrade:
-                    mingrade = twelvepointgrademap[value]
+                elif gradetuplepart in twelvepointgrademap and twelvepointgrademap[gradetuplepart] < mingrade:
+                    mingrade = twelvepointgrademap[gradetuplepart]
 
             if mingrade == float('inf'):
                 grade = numpy.NAN
