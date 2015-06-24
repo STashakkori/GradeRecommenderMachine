@@ -68,8 +68,8 @@ def main(argv1,argv2):
     #meancopy = testmatrix.mean(axis=0)
     #meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
     #u,s,v = numpy.linalg.svd(meansubtracted,full_matrices=False)
+
     """
-    examplematrix = numpy.matrix([[1.0,2.0], [3.0,4.0],[4.0,5.0],[6.0,7.0]])
     u,s,v = numpy.linalg.svd(examplematrix,full_matrices=False)
     temp = numpy.diag(s)
     test1 = numpy.dot(u,numpy.dot(temp,v))
@@ -88,7 +88,14 @@ def main(argv1,argv2):
     print test2
     print numpy.allclose(examplematrix,test2)
     """
-    testmatrix = loadmatrixfrommemory(argv1) # refactor to say loadmatrixfromdisk
+    #testmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv")
+    testmatrix = loadmatrixfromdisk(argv1) # refactor to say loadmatrixfromdisk
+    #imputedmatrix = imputepca(testmatrix,1)
+    #testmatrix = numpy.array([[1.0,2.0],[4.0,3.0],[3.0,3.0],[4.0,5.0]])
+    k = 2
+
+    #imputedmatrix = imputepca(testmatrix,4)
+    imputedmatrix = imputepca(testmatrix,k)
 
     #numpy.savetxt("matrixfordrparry.csv", testmatrix, delimiter=",")
     #pca = skd.SparsePCA(testmatrix.shape[1])
@@ -97,7 +104,7 @@ def main(argv1,argv2):
     #imputedmatrix = imputepca(testmatrix,testmatrix.shape[1])
 
     if argv1 and argv1.endswith(".npy"):
-        sparsematrix = loadmatrixfrommemory(argv1)
+        sparsematrix = loadmatrixfromdisk(argv1)
         if argv2 == "ROWMEAN":
             imputedmatrix = imputerowmean(sparsematrix)
         elif argv2 == "COLMEAN":
@@ -136,6 +143,7 @@ def imputerowmean(matrix):
     return matrix
 
 def imputepca(matrix,k):
+    k = k - 1
     copyofmatrix = matrix.copy()
     nanprofile = getnanprofile(matrix)
     filledinmatrix = imputecolmean(copyofmatrix)
@@ -146,17 +154,14 @@ def imputepca(matrix,k):
         meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
         u,s,v = numpy.linalg.svd(meansubtracted,full_matrices=False)
         newmatrix = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
-        print numpy.allclose(meansubtracted,newmatrix)
 
         for i in range(0,newmatrix.shape[1]):
             newmatrix[:,i] += mean[i]
 
-        print numpy.allclose(meansubtracted,newmatrix)
-        print numpy.allclose(filledinmatrix,newmatrix)
         print rootmeansquared(matrix,newmatrix)
 
         for i in range(0,filledinmatrix.shape[0]):
-            for j in range(0,k):
+            for j in range(0,filledinmatrix.shape[1]):
                 if nanprofile[i,j] == 1:
                     filledinmatrix[i,j] = newmatrix[i,j]
 
@@ -258,14 +263,14 @@ def rootmeansquared(matrix1,matrix2):
             # if we are at a missing value we can't calculate msd so we move on
             if not math.isnan(originalmatrix[i,j]) and not math.isnan(modelmatrix[i,j]):
                 difference = originalmatrix[i,j] - modelmatrix[i,j]
-                square = difference**2
+                square = difference ** 2
                 sum = sum + square
                 size = size + 1.0
 
     mean = sum/size
     return math.sqrt(mean)
 
-def loadmatrixfrommemory(filename):
+def loadmatrixfromdisk(filename):
     gradematrix = numpy.load(filename)
     return gradematrix
 
