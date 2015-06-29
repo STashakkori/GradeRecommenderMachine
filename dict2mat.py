@@ -66,7 +66,7 @@ def convertdictionariestomatrices(studentdictionary,activitydictionary):
     dummieidlabels.sort(key=int)
     activitylabels = activitydictionary.keys()
     activitylabels.sort()
-    gradematrix = numpy.empty([rows,columns])
+    gradematrix = numpy.empty([rows,columns],dtype='float32')
     gradematrix[:] = numpy.NAN
 
     for dummieid in studentdictionary:
