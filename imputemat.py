@@ -131,12 +131,11 @@ def main(argv1,argv2):
         exit(1)
 
 def imputecolmean(matrix):
-    mean = stats.nanmean(matrix,axis=0)
-    for i in range(0,matrix.shape[0]):
-        for j in range(0,matrix.shape[1]):
-            if math.isnan(matrix[i,j]):
-                matrix[i,j] = mean[j]
-    return matrix
+    newmatrix = matrix.copy()
+    mean = stats.nanmean(newmatrix,axis=0)
+    inds = numpy.where(numpy.isnan(newmatrix))
+    newmatrix[inds] = numpy.take(mean,inds[1])
+    return newmatrix
 
 def imputerowmean(matrix):
     mean = stats.nanmean(matrix,axis=1)
@@ -216,16 +215,37 @@ def imputesvd(matrix,k):
     return filledinmatrix
 
 def imputeals(matrix,k):
-    x = matrix
-    nanprofile = getnanprofile(matrix)
-    rmsestack = []
-    distance = float('inf')
-    v = numpy.random.normal(0.0,1.0,(x.shape[0],k))
-    u = numpy.zeros(x.shape[0],k)
+    #nanprofile = getnanprofile(matrix)
+    oldrss = float('inf')
+    rss = float('inf')
+    diff = float('inf')
+    x = imputecolmean(matrix) # x -> (m x n)
+    m = x.shape[0]
+    n = x.shape[1]
+    v = numpy.random.normal(0.0,1.0,(k,n)) # v -> (k x n)
+    while rss > .00001:
+        t0 = time.time()
+        print "update u"
+        utranspose = numpy.linalg.lstsq(v.T,x.T)[0]
+        u = utranspose.T # u -> (m x k)
+        print "update v"
+        v = numpy.linalg.lstsq(u,x)[0]
+        approx = numpy.dot(u,v)
+        rss = numpy.linalg.norm(x - approx)
+        t1 = time.time()
+        ttotal = t1 - t0
+        diff = (oldrss - rss) / oldrss
+        print("rss: " + str(rss) + " time: " + str(ttotal) + "diff: " + str(diff))
+        oldrss = rss
+        if diff < .00001: break
+
+    """
+    #u = numpy.zeros(x.shape[0],k)
 
     for iteration in range(0,100):
         gc.collect()
-        u,v = numpy.linalg.lstsq(x)
+        u = numpy.linalg.lstsq(v,x)
+
         newmatrix = numpy.dot(u[:,:k],v[:k,:])
 
         newrmse = rootmeansquared(matrix,newmatrix)
@@ -245,7 +265,9 @@ def imputeals(matrix,k):
                     x[i,j] = newmatrix[i,j]
 
         del newmatrix
+    """
     return x
+
 
 
 def imputeeigfull(matrix):
@@ -305,6 +327,24 @@ def imputesvdfull(matrix):
     return filledinmatrix
 
 #preprocessing/CSDataFile_ForParry_2014Nov26_grademat.npy EIG
+
+def rootsumsquared(matrix1,matrix2):
+    originalmatrix = matrix1.copy()
+    modelmatrix = matrix2.copy()
+    if originalmatrix.shape != modelmatrix.shape:
+        return "error"
+
+    sum = 0
+
+    for i in range(0,originalmatrix.shape[0]):
+        for j in range(0,originalmatrix.shape[1]):
+            # if we are at a missing value we can't calculate msd so we move on
+            if not math.isnan(originalmatrix[i,j]) and not math.isnan(modelmatrix[i,j]):
+                difference = originalmatrix[i,j] - modelmatrix[i,j]
+                square = difference ** 2
+                sum = sum + square
+
+    return math.sqrt(sum)
 
 def rootmeansquared(matrix1,matrix2):
     originalmatrix = matrix1.copy()
