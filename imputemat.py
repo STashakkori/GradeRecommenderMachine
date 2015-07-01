@@ -96,10 +96,9 @@ def main(argv1,argv2):
     k = 1
 
     #imputedmatrix = imputepca(testmatrix,4)
-    #imputedmatrix = imputepca(testmatrix,k)
-    imputedmatrix = imputeals(testmatrix,k)
-    print imputedmatrix
-    print imputedmatrix.shape
+    imputedmatrix = imputepcafast(testmatrix,k)
+    #imputedmatrix = imputesvd(testmatrix,k)
+    #imputedmatrix = imputeals(testmatrix,k)
 
     #numpy.savetxt("matrixfordrparry.csv", testmatrix, delimiter=",")
     #pca = skd.SparsePCA(testmatrix.shape[1])
@@ -145,9 +144,38 @@ def imputerowmean(matrix):
                 matrix[i,j] = mean[i]
     return matrix
 
-def imputepca(matrix,k):
+def imputepcafast(matrix,k):
     copyofmatrix = matrix.copy()
-    nanprofile = getnanprofile(matrix)
+    filledinmatrix = imputecolmean(copyofmatrix)
+    rmsestack = []
+    distance = float('inf')
+
+    for iteration in range(0,100):
+        gc.collect()
+        mean = filledinmatrix.mean(axis=0)
+        meansubtracted = numpy.subtract(filledinmatrix[:,:],mean)
+        u,v = calcals(meansubtracted,k)
+        del meansubtracted
+        newmatrix = numpy.dot(u,v)
+
+        for i in range(0,newmatrix.shape[1]):
+            newmatrix[:,i] += mean[i]
+        del mean
+        newrmse = rootmeansquared(matrix,newmatrix)
+        if rmsestack:
+            oldrmse = rmsestack.pop()
+            distance = ((oldrmse - newrmse)/oldrmse)
+            del oldrmse
+        print("iteration: " + str(iteration + 1) + "  rmse: " + str(newrmse) + "  distance: " + str(distance))
+        if distance < .00001: break
+        del distance
+        rmsestack.append(newrmse)
+        filledinmatrix[numpy.isnan(matrix)] = newmatrix[numpy.isnan(matrix)]
+        del newmatrix
+    return filledinmatrix
+
+def imputepcaslow(matrix,k):
+    copyofmatrix = matrix.copy()
     filledinmatrix = imputecolmean(copyofmatrix)
     rmsestack = []
     distance = float('inf')
@@ -162,7 +190,6 @@ def imputepca(matrix,k):
 
         for i in range(0,newmatrix.shape[1]):
             newmatrix[:,i] += mean[i]
-
         del mean
         newrmse = rootmeansquared(matrix,newmatrix)
         if rmsestack:
@@ -170,22 +197,15 @@ def imputepca(matrix,k):
             distance = ((oldrmse - newrmse)/oldrmse)
             del oldrmse
         print("iteration: " + str(iteration + 1) + "  rmse: " + str(newrmse) + "  distance: " + str(distance))
-
         if distance < .00001: break
         del distance
         rmsestack.append(newrmse)
-
-        for i in range(0,filledinmatrix.shape[0]):
-            for j in range(0,filledinmatrix.shape[1]):
-                if nanprofile[i,j] == 1:
-                    filledinmatrix[i,j] = newmatrix[i,j]
-
+        filledinmatrix[numpy.isnan(matrix)] = newmatrix[numpy.isnan(matrix)]
         del newmatrix
     return filledinmatrix
 
 def imputesvd(matrix,k):
     copyofmatrix = matrix.copy()
-    nanprofile = getnanprofile(matrix)
     filledinmatrix = imputecolmean(copyofmatrix)
     rmsestack = []
     distance = float('inf')
@@ -194,81 +214,60 @@ def imputesvd(matrix,k):
         gc.collect()
         u,s,v = numpy.linalg.svd(filledinmatrix,full_matrices=False)
         newmatrix = numpy.dot(u[:,:k],numpy.dot(numpy.diag(s[:k]),v[:k,:]))
-
         newrmse = rootmeansquared(matrix,newmatrix)
         if rmsestack:
             oldrmse = rmsestack.pop()
             distance = ((oldrmse - newrmse)/oldrmse)
             del oldrmse
         print("iteration: " + str(iteration + 1) + "  rmse: " + str(newrmse) + "  distance: " + str(distance))
-
         if distance < .00001: break
         del distance
         rmsestack.append(newrmse)
-
-        for i in range(0,filledinmatrix.shape[0]):
-            for j in range(0,filledinmatrix.shape[1]):
-                if nanprofile[i,j] == 1:
-                    filledinmatrix[i,j] = newmatrix[i,j]
-
+        filledinmatrix[numpy.isnan(matrix)] = newmatrix[numpy.isnan(matrix)]
         del newmatrix
     return filledinmatrix
 
 def imputeals(matrix,k):
-    #nanprofile = getnanprofile(matrix)
-    oldrss = float('inf')
-    rss = float('inf')
-    diff = float('inf')
-    x = imputecolmean(matrix) # x -> (m x n)
-    m = x.shape[0]
-    n = x.shape[1]
-    v = numpy.random.normal(0.0,1.0,(k,n)) # v -> (k x n)
-    while rss > .00001:
-        t0 = time.time()
-        print "update u"
-        utranspose = numpy.linalg.lstsq(v.T,x.T)[0]
-        u = utranspose.T # u -> (m x k)
-        print "update v"
-        v = numpy.linalg.lstsq(u,x)[0]
-        approx = numpy.dot(u,v)
-        rss = numpy.linalg.norm(x - approx)
-        t1 = time.time()
-        ttotal = t1 - t0
-        diff = (oldrss - rss) / oldrss
-        print("rss: " + str(rss) + " time: " + str(ttotal) + "diff: " + str(diff))
-        oldrss = rss
-        if diff < .00001: break
-
-    """
-    #u = numpy.zeros(x.shape[0],k)
+    copyofmatrix = matrix.copy()
+    filledinmatrix = imputecolmean(copyofmatrix)
+    rmsestack = []
+    distance = float('inf')
 
     for iteration in range(0,100):
         gc.collect()
-        u = numpy.linalg.lstsq(v,x)
-
-        newmatrix = numpy.dot(u[:,:k],v[:k,:])
-
+        u,v = calcals(filledinmatrix,k)
+        newmatrix = numpy.dot(u,v)
         newrmse = rootmeansquared(matrix,newmatrix)
         if rmsestack:
             oldrmse = rmsestack.pop()
             distance = ((oldrmse - newrmse)/oldrmse)
             del oldrmse
         print("iteration: " + str(iteration + 1) + "  rmse: " + str(newrmse) + "  distance: " + str(distance))
-
         if distance < .00001: break
         del distance
         rmsestack.append(newrmse)
-
-        for i in range(0,x.shape[0]):
-            for j in range(0,x.shape[1]):
-                if nanprofile[i,j] == 1:
-                    x[i,j] = newmatrix[i,j]
-
+        filledinmatrix[numpy.isnan(matrix)] = newmatrix[numpy.isnan(matrix)]
         del newmatrix
-    """
-    return x
+    return filledinmatrix
 
-
+def calcals(matrix,k):
+    oldrss = float('inf')
+    rss = float('inf')
+    diff = float('inf')
+    x = matrix # x -> (m x n)
+    m = x.shape[0]
+    n = x.shape[1]
+    v = numpy.random.normal(0.0,1.0,(k,n)) # v -> (k x n)
+    while rss > .00001:
+        utranspose = numpy.linalg.lstsq(v.T,x.T)[0]
+        u = utranspose.T # u -> (m x k)
+        v = numpy.linalg.lstsq(u,x)[0]
+        approx = numpy.dot(u,v)
+        rss = numpy.linalg.norm(x - approx)
+        diff = (oldrss - rss) / oldrss
+        oldrss = rss
+        if diff < .00001: break
+    return u,v
 
 def imputeeigfull(matrix):
     copyofmatrix = matrix.copy()
