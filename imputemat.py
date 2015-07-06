@@ -145,8 +145,7 @@ def imputerowmean(matrix):
     return matrix
 
 def imputepcafast(matrix,k):
-    copyofmatrix = matrix.copy()
-    filledinmatrix = imputecolmean(copyofmatrix)
+    filledinmatrix = imputecolmean(matrix)
     rmsestack = []
     distance = float('inf')
 
@@ -175,8 +174,7 @@ def imputepcafast(matrix,k):
     return filledinmatrix
 
 def imputepcaslow(matrix,k):
-    copyofmatrix = matrix.copy()
-    filledinmatrix = imputecolmean(copyofmatrix)
+    filledinmatrix = imputecolmean(matrix)
     rmsestack = []
     distance = float('inf')
 
@@ -205,8 +203,7 @@ def imputepcaslow(matrix,k):
     return filledinmatrix
 
 def imputesvd(matrix,k):
-    copyofmatrix = matrix.copy()
-    filledinmatrix = imputecolmean(copyofmatrix)
+    filledinmatrix = imputecolmean(matrix)
     rmsestack = []
     distance = float('inf')
 
@@ -228,24 +225,24 @@ def imputesvd(matrix,k):
     return filledinmatrix
 
 def imputeals(matrix,k):
-    copyofmatrix = matrix.copy()
-    filledinmatrix = imputecolmean(copyofmatrix)
+    filledinmatrix = imputecolmean(matrix)
     rmsestack = []
+    # ^^ make single variable instead of stack.
     distance = float('inf')
 
     for iteration in range(0,100):
         gc.collect()
         u,v = calcals(filledinmatrix,k)
         newmatrix = numpy.dot(u,v)
-        newrmse = rootmeansquared(matrix,newmatrix)
+        newrsse = numpy.norm(matrix - newmatrix)
         if rmsestack:
             oldrmse = rmsestack.pop()
-            distance = ((oldrmse - newrmse)/oldrmse)
+            distance = ((oldrmse - newrsse)/oldrmse)
             del oldrmse
-        print("iteration: " + str(iteration + 1) + "  rmse: " + str(newrmse) + "  distance: " + str(distance))
+        print("iteration: " + str(iteration + 1) + "  rsse: " + str(newrsse) + "  distance: " + str(distance))
         if distance < .00001: break
         del distance
-        rmsestack.append(newrmse)
+        rmsestack.append(newrsse)
         filledinmatrix[numpy.isnan(matrix)] = newmatrix[numpy.isnan(matrix)]
         del newmatrix
     return filledinmatrix

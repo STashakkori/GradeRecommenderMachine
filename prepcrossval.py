@@ -45,13 +45,66 @@ def loadjson(filename):
         return j
 
 def createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse):
-    matrix = numpy.empty(0,0)
-    for key in studentdictionary.keys():
-        if targetcourse in studentdictionary[key]:
+    twelvepointgrademap = {"A":12.0,"A-":11.0,"B+":10.0,"B":9.0,"B-":8.0,"C+":7.0,"C":6.0,"C-":5.0,"D+":4.0,"D":3.0,"D-":2.0,"F":0.0}
+    rows = len(studentdictionary.keys())
+    columns = len(activitydictionary.keys())
+    dummieidlabels = studentdictionary.keys()
+    dummieidlabels.sort(key=int)
+    activitylabels = activitydictionary.keys()
+    activitylabels.sort()
+    gradematrix = numpy.empty([rows,columns],dtype='float32')
+    gradematrix[:] = numpy.NAN
 
+    for dummieid in studentdictionary:
+        rowindex = dummieidlabels.index(dummieid)
+        for activity in studentdictionary.keys():
+            if targetcourse in studentdictionary[activity]:
+                columnindex = activitylabels.index(activity)
+                # Grab the lowest grade out of dictionary entry.
+                mingrade = float('inf')
+                for value in studentdictionary[dummieid][activity]:
+                    gradetuplepart = value[0]
+                    if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
+                        mingrade = gradetuplepart
 
-    return
+                    elif gradetuplepart in twelvepointgrademap and twelvepointgrademap[gradetuplepart] < mingrade:
+                        mingrade = twelvepointgrademap[gradetuplepart]
 
+                if mingrade == float('inf'):
+                    grade = numpy.NAN
+                else:
+                    grade = mingrade
+                gradematrix[rowindex][columnindex] = grade
+    return gradematrix, dummieidlabels, activitylabels
+
+"""
+    createmapfromlabel - method that converts a enumerated map from a list.
+"""
+def createmapsfromlabels(list1,list2):
+    map1 = {}
+    map2 = {}
+    for index,item in enumerate(list1):
+        map1[item] = index
+
+    for index,item in enumerate(list2):
+        map2[item] = index
+
+    return map1,map2
+
+"""
+    pruneemptycolumns - method that removes columns that are populated entirely with NAN's
+"""
+def pruneemptycolumns(gradematrix, activitylabels):
+    validgradereference = numpy.zeros(gradematrix.shape[1])
+    for i in range(0,gradematrix.shape[0]):
+        for j in range(0,gradematrix.shape[1]):
+            if not math.isnan(gradematrix[i][j]):
+                validgradereference[j] += 1
+
+    zerolist = numpy.where(validgradereference == 0.0)
+    gradematrix = numpy.delete(gradematrix,zerolist,1)
+    activitylabels = numpy.delete(activitylabels,zerolist,0)
+    return gradematrix, activitylabels
 
 if __name__ == "__main__":
     usage = colored("crossval ==> ERROR --> Improper command line arguments ~~> Usage : python imputemat.py <matrix.npy> <ROWMEAN, COLMEAN, EIG, SVD, or ALS>","red")
