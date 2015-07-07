@@ -33,10 +33,9 @@ def main(argv1,argv2,argv3):
     colorama.init(autoreset=True)
     print(colored("crossval","blue"))
     studentdictionary = loadjson(argv1)
-    activitydictfile = loadjson(argv2)
+    activitydictionary = loadjson(argv2)
     targetcourse = argv3
-
-
+    s,d,a = createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse)
 
 def loadjson(filename):
         f = open(filename,"rb")
@@ -57,24 +56,56 @@ def createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse):
 
     for dummieid in studentdictionary:
         rowindex = dummieidlabels.index(dummieid)
-        for activity in studentdictionary.keys():
-            if targetcourse in studentdictionary[activity]:
-                columnindex = activitylabels.index(activity)
-                # Grab the lowest grade out of dictionary entry.
-                mingrade = float('inf')
-                for value in studentdictionary[dummieid][activity]:
-                    gradetuplepart = value[0]
-                    if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
-                        mingrade = gradetuplepart
+        if not targetcourse in studentdictionary[dummieid]:
+            continue
 
-                    elif gradetuplepart in twelvepointgrademap and twelvepointgrademap[gradetuplepart] < mingrade:
-                        mingrade = twelvepointgrademap[gradetuplepart]
+        targetcourseorder = studentdictionary[dummieid][targetcourse][0][1]
 
-                if mingrade == float('inf'):
+        for activity in studentdictionary[dummieid]:
+            columnindex = activitylabels.index(activity)
+            thiscoursegrade = studentdictionary[dummieid][activity][0][0]
+            thiscourseorder = studentdictionary[dummieid][activity][0][1]
+            mingrade = float('inf')
+
+            if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
+                    mingrade = thiscoursegrade
+
+            elif thiscourseorder < targetcourseorder and thiscoursegrade in twelvepointgrademap and twelvepointgrademap[thiscoursegrade] < mingrade:
+                mingrade = twelvepointgrademap[thiscoursegrade]
+
+            if mingrade == float('inf'):
                     grade = numpy.NAN
-                else:
-                    grade = mingrade
-                gradematrix[rowindex][columnindex] = grade
+
+            else:
+                grade = mingrade
+            gradematrix[rowindex][columnindex] = grade
+
+        """
+        targetorder = studentdictionary[dummieid][targetcourse]
+        print targetorder
+        for activity in studentdictionary[dummieid]:
+            gradepartoftuple = studentdictionary[dummieid][0]
+            orderpartoftuple = studentdictionary[dummieid][1]
+            if orderpartoftuple <
+        """
+        """
+            columnindex = activitylabels.index(activity)
+            # Grab the lowest grade out of dictionary entry.
+            mingrade = float('inf')
+            for value in studentdictionary[dummieid][activity]:
+                gradetuplepart = value[0]
+                if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
+                    mingrade = gradetuplepart
+
+                elif gradetuplepart in twelvepointgrademap and twelvepointgrademap[gradetuplepart] < mingrade:
+                    mingrade = twelvepointgrademap[gradetuplepart]
+
+            if mingrade == float('inf'):
+                grade = numpy.NAN
+            else:
+                grade = mingrade
+            gradematrix[rowindex][columnindex] = grade
+        """
     return gradematrix, dummieidlabels, activitylabels
 
 """
@@ -116,7 +147,7 @@ if __name__ == "__main__":
         studentdictfile = sys.argv[1]
         activitydictfile = sys.argv[2]
         targetcourse = sys.argv[3]
-        main(studentdictfile,activitydictfile,targetcourse) # main(["preprocessing/CSDataFile_ForParry_2014Nov26_studentdict.json","preprocessing/CSDataFile_ForParry_2014Nov26_activitydict.json,"C S 2440"])
+        main(studentdictfile,activitydictfile,targetcourse) # main(["preprocessing/CSDataFile_ForParry_2014Nov26_studentdict.json","preprocessing/CSDataFile_ForParry_2014Nov26_activitydict.json","C S 2440"])
         t1 = time.time()
         totaltime = t1 - t0
         print(colored("crossval ~=> " + str(totaltime) + " seconds.","yellow"))

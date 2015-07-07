@@ -82,8 +82,8 @@ def parsecsvtodictionary(filename):
                 # otherwise, use the column header as the key and just insert the csv entry as the value
                 else:
                     score = cell
-                    studentdictionary[studentid].setdefault(activityid,[]).append((score,))
-                    activitydictionary[activityid].setdefault(studentid,[]).append((score,))
+                    studentdictionary[studentid].setdefault(activityid,[]).append((score,-1))
+                    activitydictionary[activityid].setdefault(studentid,[]).append((score,-1))
                 file.close()
     return studentdictionary,activitydictionary
 
