@@ -35,7 +35,23 @@ def main(argv1,argv2,argv3):
     studentdictionary = loadjson(argv1)
     activitydictionary = loadjson(argv2)
     targetcourse = argv3
-    s,d,a = createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse)
+    g,d,a = createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse)
+    g,a = pruneemptycolumns(g,a)
+    numpy.set_printoptions(threshold=numpy.nan)
+    #print "printing dummies:"
+    print d[0]
+    #print a
+    print g.shape
+    print g[0,0]
+    print g[0,1]
+    print g[0,2]
+    print g[0,3]
+    print g[0,4]
+    print g[0,5]
+    print g[0,253]
+    print numpy.where(a=="C S 2440")
+    #print a
+    #print g[numpy.where(d == "1400002")][numpy.where(a=="C S 2440")]
 
 def loadjson(filename):
         f = open(filename,"rb")
@@ -56,7 +72,8 @@ def createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse):
 
     for dummieid in studentdictionary:
         rowindex = dummieidlabels.index(dummieid)
-        if not targetcourse in studentdictionary[dummieid]:
+        if targetcourse not in studentdictionary[dummieid]:
+            dummieidlabels.remove(dummieid)
             continue
 
         targetcourseorder = studentdictionary[dummieid][targetcourse][0][1]
@@ -70,57 +87,16 @@ def createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse):
             if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
                     mingrade = thiscoursegrade
 
-            elif thiscourseorder < targetcourseorder and thiscoursegrade in twelvepointgrademap and twelvepointgrademap[thiscoursegrade] < mingrade:
+            elif thiscoursegrade in twelvepointgrademap and thiscourseorder < targetcourseorder and twelvepointgrademap[thiscoursegrade] < mingrade:
                 mingrade = twelvepointgrademap[thiscoursegrade]
 
-            if mingrade == float('inf'):
+            if not mingrade or mingrade == float('inf'):
                     grade = numpy.NAN
 
             else:
                 grade = mingrade
             gradematrix[rowindex][columnindex] = grade
-
-        """
-        targetorder = studentdictionary[dummieid][targetcourse]
-        print targetorder
-        for activity in studentdictionary[dummieid]:
-            gradepartoftuple = studentdictionary[dummieid][0]
-            orderpartoftuple = studentdictionary[dummieid][1]
-            if orderpartoftuple <
-        """
-        """
-            columnindex = activitylabels.index(activity)
-            # Grab the lowest grade out of dictionary entry.
-            mingrade = float('inf')
-            for value in studentdictionary[dummieid][activity]:
-                gradetuplepart = value[0]
-                if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
-                    mingrade = gradetuplepart
-
-                elif gradetuplepart in twelvepointgrademap and twelvepointgrademap[gradetuplepart] < mingrade:
-                    mingrade = twelvepointgrademap[gradetuplepart]
-
-            if mingrade == float('inf'):
-                grade = numpy.NAN
-            else:
-                grade = mingrade
-            gradematrix[rowindex][columnindex] = grade
-        """
     return gradematrix, dummieidlabels, activitylabels
-
-"""
-    createmapfromlabel - method that converts a enumerated map from a list.
-"""
-def createmapsfromlabels(list1,list2):
-    map1 = {}
-    map2 = {}
-    for index,item in enumerate(list1):
-        map1[item] = index
-
-    for index,item in enumerate(list2):
-        map2[item] = index
-
-    return map1,map2
 
 """
     pruneemptycolumns - method that removes columns that are populated entirely with NAN's
@@ -133,8 +109,9 @@ def pruneemptycolumns(gradematrix, activitylabels):
                 validgradereference[j] += 1
 
     zerolist = numpy.where(validgradereference == 0.0)
-    gradematrix = numpy.delete(gradematrix,zerolist,1)
     activitylabels = numpy.delete(activitylabels,zerolist,0)
+    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=0)]
+    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=1)]
     return gradematrix, activitylabels
 
 if __name__ == "__main__":
