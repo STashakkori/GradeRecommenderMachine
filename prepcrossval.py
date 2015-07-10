@@ -36,28 +36,49 @@ def main(argv1,argv2,argv3):
     activitydictionary = loadjson(argv2)
     targetcourse = argv3
     g,d,a = createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse)
-    g,a = pruneemptycolumns(g,a)
+    #g,d,a = pruneemptycolumns(g,d,a)
     numpy.set_printoptions(threshold=numpy.nan)
-    #print "printing dummies:"
-    print d[0]
-    #print a
+    print "TESTING:"
+    print len(a)
+    print len(d)
+    index1 = 0
+    index2 = 0
+    for x in range(0,len(d)):
+        if d[x] == "1400002":
+            index1 = x
+
+    for x in range(0,len(a)):
+        if a[x] == " C S 1100":
+            index2 = x
+
     print g.shape
-    print g[0,0]
-    print g[0,1]
-    print g[0,2]
-    print g[0,3]
-    print g[0,4]
-    print g[0,5]
-    print g[0,253]
-    print numpy.where(a=="C S 2440")
-    #print a
-    #print g[numpy.where(d == "1400002")][numpy.where(a=="C S 2440")]
+    print g[index1][index2]
+    #print g[numpy.where(d == "1400002")[0]]
+    #print g[numpy.where(d == "1400002")][numpy.where(a == "C S 1100")[0]]
 
 def loadjson(filename):
         f = open(filename,"rb")
         j = json.loads(open(filename).read())
         f.close()
         return j
+
+""" debugging
+            if dummieid == "1400002":
+                print targetcourse
+                print targetcourseorder
+                print "activity:"
+                print activity
+                print thiscourseorder
+                print thiscoursegrade
+                print "activitylabels.index(activity): " + str(activitylabels.index(activity))
+                print ("thiscoursegrade in twelvepointgrademap: " + str(thiscoursegrade in twelvepointgrademap))
+                print ("thiscourseorder < targetcourseorder: " + str(thiscourseorder < targetcourseorder))
+                if thiscoursegrade in twelvepointgrademap: print ("twelvepointgrademap[thiscoursegrade]: " + str(twelvepointgrademap[thiscoursegrade]))
+                if thiscoursegrade in twelvepointgrademap: print ("twelvepointgrademap[thiscoursegrade] < mingrade: " + str(twelvepointgrademap[thiscoursegrade] < mingrade))
+                m = str(mingrade)
+                print "mingrade: ",mingrade
+                print "=========="
+"""
 
 def createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse):
     twelvepointgrademap = {"A":12.0,"A-":11.0,"B+":10.0,"B":9.0,"B-":8.0,"C+":7.0,"C":6.0,"C-":5.0,"D+":4.0,"D":3.0,"D-":2.0,"F":0.0}
@@ -73,26 +94,31 @@ def createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse):
     for dummieid in studentdictionary:
         rowindex = dummieidlabels.index(dummieid)
         if targetcourse not in studentdictionary[dummieid]:
-            dummieidlabels.remove(dummieid)
+            #dummieidlabels.remove(dummieid)
             continue
 
         targetcourseorder = studentdictionary[dummieid][targetcourse][0][1]
 
         for activity in studentdictionary[dummieid]:
             columnindex = activitylabels.index(activity)
-            thiscoursegrade = studentdictionary[dummieid][activity][0][0]
-            thiscourseorder = studentdictionary[dummieid][activity][0][1]
+            #thiscoursegrade = studentdictionary[dummieid][activity][0][0]
+            #thiscourseorder = studentdictionary[dummieid][activity][0][1]
             mingrade = float('inf')
+            for value in studentdictionary[dummieid][activity]:
+                thiscoursegrade = value[0]
+                thiscourseorder = value[1]
+                print "thiscoursegrade: ",thiscoursegrade
+                print "thiscourseorder: ",thiscourseorder
 
-            if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
+
+                if activity == "SATV_score" or activity == "SATM_score" or activity == "ACTEng_score" or activity == "ACTMat_score" or activity == "MathPlacement_PLM1_Score" or activity == "MathPlacement_PLM2_Score" or activity == "MathPlacement_PLM3_Score" or activity == "HSGPA":
                     mingrade = thiscoursegrade
 
-            elif thiscoursegrade in twelvepointgrademap and thiscourseorder < targetcourseorder and twelvepointgrademap[thiscoursegrade] < mingrade:
-                mingrade = twelvepointgrademap[thiscoursegrade]
+                elif thiscoursegrade in twelvepointgrademap and thiscourseorder < targetcourseorder and twelvepointgrademap[thiscoursegrade] < mingrade:
+                    mingrade = twelvepointgrademap[thiscoursegrade]
 
-            if not mingrade or mingrade == float('inf'):
-                    grade = numpy.NAN
-
+            if mingrade == float('inf'):
+                grade = numpy.NAN
             else:
                 grade = mingrade
             gradematrix[rowindex][columnindex] = grade
@@ -101,7 +127,8 @@ def createcoursespecificnpy(studentdictionary,activitydictionary,targetcourse):
 """
     pruneemptycolumns - method that removes columns that are populated entirely with NAN's
 """
-def pruneemptycolumns(gradematrix, activitylabels):
+def pruneemptycolumns(gradematrix, dummieidlabels, activitylabels):
+
     validgradereference = numpy.zeros(gradematrix.shape[1])
     for i in range(0,gradematrix.shape[0]):
         for j in range(0,gradematrix.shape[1]):
@@ -110,9 +137,12 @@ def pruneemptycolumns(gradematrix, activitylabels):
 
     zerolist = numpy.where(validgradereference == 0.0)
     activitylabels = numpy.delete(activitylabels,zerolist,0)
-    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=0)]
-    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=1)]
-    return gradematrix, activitylabels
+
+    #activitylabels = numpy.delete(activitylabels,gradematrix[numpy.isnan(gradematrix).all(axis=0)],0)
+    #dummieidlabels = numpy.delete(dummieidlabels,gradematrix[numpy.isnan(gradematrix).all(axis=1)],0)
+    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=0)] # prune columns
+    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=1)] # prune rows
+    return gradematrix, dummieidlabels, activitylabels
 
 if __name__ == "__main__":
     usage = colored("crossval ==> ERROR --> Improper command line arguments ~~> Usage : python imputemat.py <matrix.npy> <ROWMEAN, COLMEAN, EIG, SVD, or ALS>","red")

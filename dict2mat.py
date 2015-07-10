@@ -34,8 +34,21 @@ def main(argv,argv2):
         studentmap = loadjson(argv)
         activitymap = loadjson(argv2)
         g,d,a = convertdictionariestomatrices(studentmap,activitymap)
-        g,a = pruneemptycolumns(g,a)
+        #g,a = pruneemptycolumns(g,a)
         dm,am = createmapsfromlabels(d,a)
+        index1 = 0
+        index2 = 0
+        for x in range(0,len(d)):
+            if d[x] == "1400002":
+                index1 = x
+
+        for x in range(0,len(a)):
+            if a[x] == " C S 1100":
+                index2 = x
+
+        print g.shape
+        print g[index1][index2]
+
         storenewdatastructuresinmemory(g,d,a,dm,am,argv)
 
     else:
@@ -108,6 +121,7 @@ def createmapsfromlabels(list1,list2):
     pruneemptycolumns - method that removes columns that are populated entirely with NAN's
 """
 def pruneemptycolumns(gradematrix, activitylabels):
+    """
     validgradereference = numpy.zeros(gradematrix.shape[1])
     for i in range(0,gradematrix.shape[0]):
         for j in range(0,gradematrix.shape[1]):
@@ -117,6 +131,10 @@ def pruneemptycolumns(gradematrix, activitylabels):
     zerolist = numpy.where(validgradereference == 0.0)
     gradematrix = numpy.delete(gradematrix,zerolist,1)
     activitylabels = numpy.delete(activitylabels,zerolist,0)
+    """
+    activitylabels = numpy.delete(activitylabels,numpy.isnan(gradematrix).all(axis=0),0)
+    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=0)] # prune columns
+    gradematrix = gradematrix[~numpy.isnan(gradematrix).all(axis=1)] # prune rows
     return gradematrix, activitylabels
 
 """
