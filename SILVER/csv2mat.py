@@ -3,7 +3,6 @@
 """
     csv2mat.py -
 """
-
 __author__ = 'sina'
 __project__ = 'STProject'
 
@@ -23,19 +22,24 @@ def main(csv_filename):
     student_list = []
     activity_map = {}
     data = None
+    orders = None
+
     with open(csv_filename, 'r') as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
-        num_rows = sum(1 for row in reader)
+        num_rows = sum(1 for row in reader) - 1
 
     with open(csv_filename, 'r') as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
         row_index = 0
         for row in reader:
+            activity_counter = 0
+
             # Build a map of headers
             if first_row:
                 headers = row
                 num_cols = 7000 * 3
                 data = numpy.zeros((num_rows, num_cols)) * numpy.nan
+                orders = numpy.zeros((num_rows, num_cols)) * numpy.nan
                 first_row = False
                 continue
 
@@ -46,9 +50,11 @@ def main(csv_filename):
             # Populate matrix
             for i, item in enumerate(row):
                 h = headers[i]
+
                 if h in tests:
                     activity = h
                     score = item
+                    exam = True
 
                 elif h[:6] == "Course":
                     if item == "":
@@ -56,6 +62,7 @@ def main(csv_filename):
 
                     activity = item
                     score = row[i + 131]
+                    exam = False
 
                 else:
                     continue
@@ -72,6 +79,11 @@ def main(csv_filename):
 
                 col_index = activity_map[activity]
                 data[row_index, col_index] = convert_score(score)
+                if exam:
+                    orders[row_index, col_index] = -1
+                else:
+                    orders[row_index, col_index] = activity_counter
+                    activity_counter += 1
             if row_index % 100 == 0:
                 sys.stdout.write("\r" + str(row_index))
                 sys.stdout.flush()
@@ -79,12 +91,13 @@ def main(csv_filename):
     activity_list = [item[0] for item in sorted(activity_map.items(), key=operator.itemgetter(1))]
     num_cols = len(activity_list)
     data = data[:, :num_cols]
+    orders = orders[:, :num_cols]
     new_filename = csv_filename + ".npz"
-    numpy.savez_compressed(new_filename, data=data, activity_list=activity_list, student_list=student_list)
+    numpy.savez_compressed(new_filename, data=data, orders=orders, activity_list=activity_list, student_list=student_list)
 
-def get_grade(data, activitymap, studentlist, dummieid,activity):
-    row_index = studentlist.index(dummieid)
-    col_index = activitymap[activity]
+def get_grade(data, activity_map, student_list, dummie_id, activity):
+    row_index = student_list.index(dummie_id)
+    col_index = activity_map[activity]
     return data[row_index,col_index]
 
 def convert_score(score_string):
