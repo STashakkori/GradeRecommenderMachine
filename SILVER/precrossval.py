@@ -39,7 +39,7 @@ def main(target, goback):
             if orders[i, j] >= newtarget_order:
                 data[i, j] = numpy.nan
 
-    new_filename = "precrossval_goback" + str(goback) + ".npz"
+    new_filename = "precrossvalout/precrossval_goback" + str(goback) + ".npz"
     numpy.savez_compressed(new_filename, data=data, activity_list=activity_list, student_list=student_list)
 
 if __name__ == "__main__":
