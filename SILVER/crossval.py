@@ -52,7 +52,7 @@ def n_in_k_fold(data, k, n, t):
     grouping = [(i % k) + 1 for i in range(0, len(data))]
     for iteration in range(0, n):
         random.shuffle(grouping)
-        groupings.append(grouping)
+        groupings.append(grouping.copy())
         folds = []
         for group in range(1, k + 1):
             f = remove_target(data.copy(), t, group, grouping)
