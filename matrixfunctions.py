@@ -16,10 +16,5 @@ def matrixequality(matrix1,matrix2):
                 print matrix1[i][j]
                 print matrix2[i][j]
                 return False,i,j
-
-            """
-            if matrix1[i][j] != matrix2[i][j]:
-                return False,i,j
-            """
     return True,None,None
 

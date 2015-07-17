@@ -14,6 +14,7 @@ import sys
 import random
 import re
 import os
+import imputemat
 
 """
     main - main method of the crossval program.
@@ -39,10 +40,22 @@ def main(argv1, argv2, argv3, argv4):
     data = result['data']
     activity_list = list(result['activity_list'])
     student_list = list(result['student_list'])
+    actual_vector = result['actual_vector']
     target_course_column = activity_list.index(target_course)
     iterations, groupings = n_in_k_fold(data, k_folds, n_iterations, target_course_column)
+    """ #uncomment to save results. Takes a while so don't do it if not necessary
     save_data(data, k_folds, n_iterations, target_course, new_dir_name, iterations, groupings, student_list,
               activity_list)
+    """
+    estimates,results = run_algorithm(new_dir_name, 1, target_course,k_folds)
+    out_dir_name = dir_name + "/crossvalout"
+    if not os.path.exists(out_dir_name):
+        os.makedirs(out_dir_name)
+    numpy.savez_compressed(out_dir_name + "/result_matrices.npz", activity_list=activity_list,
+                   student_list=student_list,**{"result_matrix" + str(j) : value for j,value in enumerate(results)})
+
+    numpy.savez_compressed(out_dir_name + "/estimate_vectors.npz",actual_vector=actual_vector,
+                           **{"estimate_vector" + str(j) : value for j,value in enumerate(results)})
 
 """
     remove_target
@@ -85,6 +98,31 @@ def save_data(data, k, n, t, new_dir_name, iterations, groupings, student_list, 
         numpy.savez_compressed(new_filename, activity_list=activity_list, student_list=student_list,
                                groupings=groupings[i], **{"fold" + str(j) : value for j,value in
                                                           enumerate(iterations[i])})
+
+"""
+    run_algorithm
+"""
+def run_algorithm(sub_dir_name, k, t, number_folds):
+    estimates = []
+    results = []
+    for i,iteration in enumerate(os.listdir(sub_dir_name)):
+        # folds -> package that holds k number of matrices for folds.
+        folds = numpy.load(sub_dir_name + "/" + "iteration" + str(i) + ".npz")
+        a = list(folds['activity_list'])
+        target_column = a.index(t)
+        for fold in range(0, number_folds):
+            data_matrix = folds['fold' + str(fold)]
+            groupings = folds['groupings']
+            estimate = [None] * len(groupings)
+            print data_matrix
+            result = imputemat.imputepcafast(data_matrix, k)
+            results.append(result)
+            for row_index, group_assignment in enumerate(groupings):
+                if group_assignment == fold:
+                    estimate.append(result[row_index][target_column])
+        estimates.append(estimate)
+    return estimates, results
+
 
 if __name__ == "__main__":
     usage = colored("crossval ==> ERROR --> Improper command line arguments ~~> Usage : python imputemat.py "

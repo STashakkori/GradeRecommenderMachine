@@ -12,6 +12,7 @@ import csv
 import numpy
 import os
 import sys
+import math
 
 """
     main
@@ -28,6 +29,7 @@ def main(target_course, go_back):
     student_list = list(student_list[~remove_student_index])
     data = data[~remove_student_index, :]
     orders = orders[~remove_student_index, :]
+    actual_vector = data[:,target_column]
 
     for i in range(0, data.shape[0]):
         target_order = int(orders[i, target_column])
@@ -37,8 +39,19 @@ def main(target_course, go_back):
 
         for j in range(0, data.shape[1]):
             current_grade_order = orders[i ,j]
-            if current_grade_order >= lower_bound_order and current_grade_order < target_order:
+            if current_grade_order >= lower_bound_order < target_order:
                 data[i, j] = numpy.nan
+
+    validgradereference = numpy.zeros(data.shape[1])
+    for i in range(0,data.shape[0]):
+        for j in range(0,data.shape[1]):
+            if not math.isnan(data[i][j]):
+                validgradereference[j] += 1
+
+    zerolist = numpy.where(validgradereference == 0.0)
+    data = numpy.delete(data,zerolist,1)
+    orders = numpy.delete(orders,zerolist,1)
+    activity_list = numpy.delete(activity_list,zerolist,0)
 
     dir_name = target_course.replace(" ", "")
     if not os.path.exists(dir_name):
@@ -50,7 +63,8 @@ def main(target_course, go_back):
         os.makedirs(sub_dir_name)
 
     new_filename = sub_dir_name + "/go_back" + str(go_back) + ".npz"
-    numpy.savez_compressed(new_filename, data=data, activity_list=activity_list, student_list=student_list)
+    numpy.savez_compressed(new_filename, data=data, activity_list=activity_list, student_list=student_list,
+                           actual_vector=actual_vector)
 
 if __name__ == "__main__":
     if len(sys.argv) > 3:
