@@ -3,7 +3,7 @@ __author__ = 'sina'
 import numpy
 
 def main():
-    results = numpy.load("crossvalin/C S 2440.1/_goback0_iter1.npz")
+    results = numpy.load("CS2440.1/crossvalin/_output/go_back0/iteration1.npz")
     data = results['fold1']
     groupings = results['groupings']
     a = list(results['activity_list'])
@@ -18,7 +18,7 @@ def main():
     print groupings
     print "**************"
 
-    results = numpy.load("crossvalin/C S 2440.1/_goback0_iter1.npz")
+    results = numpy.load("CS2440.1/crossvalin/_output/go_back0/iteration1.npz")
     data = results['fold2']
     groupings = results['groupings']
     print data[r][c]
@@ -29,7 +29,7 @@ def main():
     print groupings
     print "**************"
 
-    results = numpy.load("crossvalin/C S 2440.1/_goback0_iter1.npz")
+    results = numpy.load("CS2440.1/crossvalin/_output/go_back0/iteration1.npz")
     data = results['fold3']
     groupings = results['groupings']
     print data[r][c]
@@ -40,7 +40,7 @@ def main():
     print groupings
     print "**************"
 
-    results = numpy.load("crossvalin/C S 2440.1/_goback0_iter2.npz")
+    results = numpy.load("CS2440.1/crossvalin/_output/go_back0/iteration2.npz")
     data = results['fold1']
     groupings = results['groupings']
     print data[r][c]
@@ -51,7 +51,7 @@ def main():
     print groupings
     print "**************"
 
-    results = numpy.load("crossvalin/C S 2440.1/_goback0_iter2.npz")
+    results = numpy.load("CS2440.1/crossvalin/_output/go_back0/iteration2.npz")
     data = results['fold2']
     groupings = results['groupings']
     print data[r][c]
@@ -62,7 +62,7 @@ def main():
     print groupings
     print "**************"
 
-    results = numpy.load("crossvalin/C S 2440.1/_goback0_iter2.npz")
+    results = numpy.load("CS2440.1/crossvalin/_output/go_back0/iteration2.npz")
     data = results['fold3']
     groupings = results['groupings']
     print data[r][c]

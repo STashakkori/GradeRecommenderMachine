@@ -15,6 +15,7 @@ import operator
 
 
 def main(csv_filename):
+    debug_mode = False
     first_row = True
     tests = {"SATV_score", "SATM_score", "ACTEng_score", "ACTMat_score", "MathPlacement_PLM1_Score",
              "MathPlacement_PLM2_Score", "MathPlacement_PLM3_Score", "HSGPA"}
@@ -84,10 +85,12 @@ def main(csv_filename):
                 else:
                     orders[row_index, col_index] = activity_counter
                     activity_counter += 1
-            if row_index % 100 == 0:
-                sys.stdout.write("\r" + str(row_index))
-                sys.stdout.flush()
+            if debug_mode:
+                if row_index % 100 == 0:
+                    sys.stdout.write("\r" + str(row_index))
+                    sys.stdout.flush()
             row_index += 1
+    if debug_mode: print
     activity_list = [item[0] for item in sorted(activity_map.items(), key=operator.itemgetter(1))]
     num_cols = len(activity_list)
     data = data[:, :num_cols]
