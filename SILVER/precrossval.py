@@ -37,14 +37,14 @@ def main(target_course, go_back):
 
         for j in range(0, data.shape[1]):
             current_grade_order = orders[i ,j]
-            if current_grade_order > lower_bound_order and current_grade_order < target_order:
+            if current_grade_order >= lower_bound_order and current_grade_order < target_order:
                 data[i, j] = numpy.nan
 
     dir_name = target_course.replace(" ", "")
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    sub_dir_name = dir_name + "/" + "precrossval_output"
+    sub_dir_name = dir_name + "/" + "precrossval"
 
     if not os.path.exists(sub_dir_name):
         os.makedirs(sub_dir_name)

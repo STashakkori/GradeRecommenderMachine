@@ -33,7 +33,7 @@ def main(argv1, argv2, argv3, argv4):
     if not os.path.exists(sub_dir_name):
         os.makedirs(sub_dir_name)
 
-    new_dir_name = sub_dir_name + "/" + re.search('_.*', base_name).group(0)
+    new_dir_name = sub_dir_name + "/" + re.search('go_back.*', base_name).group(0)
 
     result = numpy.load(file_name)
     data = result['data']
