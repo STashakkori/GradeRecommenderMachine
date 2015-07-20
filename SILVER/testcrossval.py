@@ -1,220 +1,36 @@
 __author__ = 'sina'
 
 import numpy
+import imputemat
 
 def main():
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold1']
-    groupings = results['groupings']
-    a = list(results['activity_list'])
-    s = list(results['student_list'])
-    r = s.index("1400002")
-    c = a.index("C S 2440.1")
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
+    results = numpy.load("CS2440.1/crossvalout/k2_gobackgo_back0_estimate_vectors.npz")
+    data0 = results['estimate_vector0']
+    data1 = results['estimate_vector1']
+    data2 = results['estimate_vector2']
+    data3 = results['estimate_vector3']
+    data4 = results['estimate_vector4']
+    data5 = results['estimate_vector5']
+    data6 = results['estimate_vector6']
+    data7 = results['estimate_vector7']
+    data8 = results['estimate_vector8']
+    data9 = results['estimate_vector9']
 
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold2']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
+    actual = results['actual_vector']
+    mean_estimate_vector = (numpy.array(data0) + numpy.array(data1) + numpy.array(data2) + numpy.array(data3)
+                            + numpy.array(data4) + numpy.array(data5) + numpy.array(data6) + numpy.array(data7)
+                            + numpy.array(data8) + numpy.array(data9)) / 10
 
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold3']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold4']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold5']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold6']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold7']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold8']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration1.npz")
-    data = results['fold9']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold1']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold2']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold3']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold3']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold4']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold5']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold6']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold7']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold8']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
-
-    results = numpy.load("CS2440.1/crossvalin/go_back0/iteration2.npz")
-    data = results['fold9']
-    groupings = results['groupings']
-    print data[r][c]
-    print data[r][c + 1]
-    print data[r][c - 1]
-    print data[r][c - 2]
-    print data[r][c - 3]
-    print groupings
-    print "**************"
+    print data1.shape
+    print data2.shape
+    print mean_estimate_vector.shape
+    print actual.shape
+    print imputemat.rootmeansquared(mean_estimate_vector,actual)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+
+    except IOError as e:
+        print e.strerror
+        exit(-1)

@@ -24,12 +24,12 @@ def main(target_course, go_back):
     orders = result['orders']
     activity_list = list(result['activity_list'])
     student_list = result['student_list']
+
     target_column = activity_list.index(target_course)
     remove_student_index = numpy.isnan(data[:, target_column])
     student_list = list(student_list[~remove_student_index])
     data = data[~remove_student_index, :]
     orders = orders[~remove_student_index, :]
-    actual_vector = data[:,target_column]
 
     for i in range(0, data.shape[0]):
         target_order = int(orders[i, target_column])
@@ -52,6 +52,7 @@ def main(target_course, go_back):
     data = numpy.delete(data,zerolist,1)
     orders = numpy.delete(orders,zerolist,1)
     activity_list = numpy.delete(activity_list,zerolist,0)
+    actual_vector = data[:,target_column]
 
     dir_name = target_course.replace(" ", "")
     if not os.path.exists(dir_name):

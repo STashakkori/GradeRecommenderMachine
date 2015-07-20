@@ -34,8 +34,8 @@ def main(argv1, argv2, argv3, argv4):
     if not os.path.exists(sub_dir_name):
         os.makedirs(sub_dir_name)
 
-    new_dir_name = sub_dir_name + "/" + re.search('go_back.*', base_name).group(0)
-
+    goback = re.search('go_back.*', base_name).group(0)
+    new_dir_name = sub_dir_name + "/" + goback
     result = numpy.load(file_name)
     data = result['data']
     activity_list = list(result['activity_list'])
@@ -43,19 +43,23 @@ def main(argv1, argv2, argv3, argv4):
     actual_vector = result['actual_vector']
     target_course_column = activity_list.index(target_course)
     iterations, groupings = n_in_k_fold(data, k_folds, n_iterations, target_course_column)
-    """ #uncomment to save results. Takes a while so don't do it if not necessary
+    """
+    #uncomment to save results. Takes a while so don't do it if not necessary
     save_data(data, k_folds, n_iterations, target_course, new_dir_name, iterations, groupings, student_list,
               activity_list)
     """
-    estimates,results = run_algorithm(new_dir_name, 1, target_course,k_folds)
+    k_components = 1
+    estimates,results = run_algorithm(new_dir_name, k_components, target_course, k_folds)
     out_dir_name = dir_name + "/crossvalout"
     if not os.path.exists(out_dir_name):
         os.makedirs(out_dir_name)
-    numpy.savez_compressed(out_dir_name + "/result_matrices.npz", activity_list=activity_list,
-                   student_list=student_list,**{"result_matrix" + str(j) : value for j,value in enumerate(results)})
+    numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + "_result_matrices.npz",
+                    activity_list=activity_list,student_list=student_list,
+                    **{"result_matrix" + str(j) : value for j,value in enumerate(results)})
 
-    numpy.savez_compressed(out_dir_name + "/estimate_vectors.npz",actual_vector=actual_vector,
-                           **{"estimate_vector" + str(j) : value for j,value in enumerate(results)})
+    numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + "_estimate_vectors.npz",
+                   actual_vector=actual_vector,
+                   **{"estimate_vector" + str(j) : value for j,value in enumerate(estimates)})
 
 """
     remove_target
@@ -110,15 +114,15 @@ def run_algorithm(sub_dir_name, k, t, number_folds):
         folds = numpy.load(sub_dir_name + "/" + "iteration" + str(i) + ".npz")
         a = list(folds['activity_list'])
         target_column = a.index(t)
+        estimate = []
         for fold in range(0, number_folds):
             data_matrix = folds['fold' + str(fold)]
             groupings = folds['groupings']
-            estimate = [None] * len(groupings)
-            print data_matrix
-            result = imputemat.imputepcafast(data_matrix, k)
+            #result = imputemat.imputepcafast(data_matrix, k)
+            result = imputemat.imputecolmean(data_matrix)
             results.append(result)
             for row_index, group_assignment in enumerate(groupings):
-                if group_assignment == fold:
+                if group_assignment == fold + 1:
                     estimate.append(result[row_index][target_column])
         estimates.append(estimate)
     return estimates, results

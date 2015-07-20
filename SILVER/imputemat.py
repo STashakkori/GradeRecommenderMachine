@@ -79,6 +79,7 @@ def imputepcafast(matrix,k):
     filledinmatrix = imputecolmean(matrix)
     rmsestack = []
     distance = float('inf')
+    debug_mode = False
 
     for iteration in range(0,100):
         gc.collect()
@@ -96,7 +97,8 @@ def imputepcafast(matrix,k):
             oldrmse = rmsestack.pop()
             distance = ((oldrmse - newrmse)/oldrmse)
             del oldrmse
-        print("iteration: " + str(iteration + 1) + "  rmse: " + str(newrmse) + "  distance: " + str(distance))
+        if debug_mode:
+            print("iteration: " + str(iteration + 1) + "  rmse: " + str(newrmse) + "  distance: " + str(distance))
         if distance < .00001: break
         del distance
         rmsestack.append(newrmse)
