@@ -30,10 +30,14 @@ def main(argv1, argv2):
     print(colored("imputemat","blue"))
 
     #testmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv")
-    testmatrix = loadmatrixfromdisk(argv1) # refactor to say loadmatrixfromdisk
-    k = 1
+    #testmatrix = loadmatrixfromdisk(argv1) # refactor to say loadmatrixfromdisk
 
-    imputed_matrix = imputepcafast(testmatrix,k)
+    testmatrix = numpy.load(argv1)['data']
+    k = 1
+    imputed_matrix = new_als(testmatrix,k)
+    print imputed_matrix
+    exit(1)
+    #imputed_matrix = imputepcafast(testmatrix,k)
 
     if argv1 and argv1.endswith(".npy"):
         sparse_matrix = loadmatrixfromdisk(argv1)
@@ -197,7 +201,28 @@ def calcals(matrix,k):
         diff = (oldrss - rss) / oldrss
         oldrss = rss
         if diff < .00001: break
-    return u,v
+    return u, v
+
+"""
+def als_pca(matrix, k):
+    x = matrix # x -> (m x n)
+    m = x.shape[0]
+    n = x.shape[1]
+    v = numpy.random.normal(0.0,1.0,(k,n)) # v -> (k x n)
+    utranspose = numpy.linalg.lstsq(v.T,x.T)[0]
+    u = utranspose.T
+    v = numpy.random.normal(0.0, 1.0, (k, n)) # v -> (k x n)
+    for i in range(0, len(m)):
+        n = ~numpy.isnan(x[i,:])
+        u[i,:] = numpy.linalg.lstsq(v[:,n].T,x[i,n].T)[0]
+        v[:,i] = numpy.linalg.lstsq()
+
+    approx = numpy.dot(u, v)
+    return u, v
+"""
+
+def als_svd(matrix, k):
+    return
 
 def imputeeigfull(matrix):
     copyofmatrix = matrix.copy()
@@ -255,7 +280,39 @@ def imputesvdfull(matrix):
 
     return filledinmatrix
 
-#preprocessing/CSDataFile_ForParry_2014Nov26_grademat.npy EIG
+def new_als(matrix,k):
+    gc.collect()
+    u,v = fast_als(matrix,k)
+    newmatrix = numpy.dot(u,v)
+    matrix[numpy.isnan(matrix)] = newmatrix[numpy.isnan(matrix)]
+    del newmatrix
+    return matrix
+
+def fast_als(matrix,k):
+    oldrss = float('inf')
+    rss = float('inf')
+    diff = float('inf')
+    x = matrix # x -> (m x n)
+    m = x.shape[0]
+    n = x.shape[1]
+    u = numpy.random.normal(0.0, 1.0, (m, k))
+    v = numpy.random.normal(0.0, 1.0, (k, n)) # v -> (k x n)
+
+    while rss > .00001:
+        for j in range(m):
+            p = ~numpy.isnan(x[j, :])
+            v[:, j] = numpy.linalg.lstsq(u[p, :],x[p, j])[0]
+
+        for i in range(m):
+            p = ~numpy.isnan(x[i, :])
+            u[i, :].T = numpy.linalg.lstsq(v[:, p].T, x[i, p].T)[0]
+
+        approx = numpy.dot(u,v)
+        rss = numpy.linalg.norm(x - approx)
+        diff = (oldrss - rss) / oldrss
+        oldrss = rss
+        if diff < .00001: break
+    return u, v
 
 def rootsumsquared(matrix1,matrix2):
     originalmatrix = matrix1.copy()
