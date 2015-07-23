@@ -31,12 +31,12 @@ def main(argv1, argv2):
 
     #testmatrix = Recommender.csvfiletomat("pca_input_2d_missing.csv")
     #testmatrix = loadmatrixfromdisk(argv1) # refactor to say loadmatrixfromdisk
-
-    testmatrix = numpy.load(argv1)['data']
-    k = 1
-    imputed_matrix = new_als(testmatrix,k)
-    print imputed_matrix
-    exit(1)
+    #testmatrix = numpy.load(argv1)['data']
+    #testmatrix = numpy.array([[0,1,numpy.nan],[2,numpy.nan,3],[4,5,6],[numpy.nan,6,3]])
+    #k = 1
+    #imputed_matrix = new_pca(testmatrix,k)
+    #print imputed_matrix
+    #exit(1)
     #imputed_matrix = imputepcafast(testmatrix,k)
 
     if argv1 and argv1.endswith(".npy"):
@@ -193,10 +193,10 @@ def calcals(matrix,k):
     n = x.shape[1]
     v = numpy.random.normal(0.0,1.0,(k,n)) # v -> (k x n)
     while rss > .00001:
-        utranspose = numpy.linalg.lstsq(v.T,x.T)[0]
+        utranspose = numpy.linalg.lstsq(v.T, x.T)[0]
         u = utranspose.T # u -> (m x k)
-        v = numpy.linalg.lstsq(u,x)[0]
-        approx = numpy.dot(u,v)
+        v = numpy.linalg.lstsq(u, x)[0]
+        approx = numpy.dot(u, v)
         rss = numpy.linalg.norm(x - approx)
         diff = (oldrss - rss) / oldrss
         oldrss = rss
@@ -280,15 +280,14 @@ def imputesvdfull(matrix):
 
     return filledinmatrix
 
-def new_als(matrix,k):
-    gc.collect()
+def new_pca(matrix,k):
     u,v = fast_als(matrix,k)
-    newmatrix = numpy.dot(u,v)
-    matrix[numpy.isnan(matrix)] = newmatrix[numpy.isnan(matrix)]
-    del newmatrix
+    new_matrix = numpy.dot(u,v)
+    matrix[numpy.isnan(matrix)] = new_matrix[numpy.isnan(matrix)]
+    del new_matrix
     return matrix
 
-def fast_als(matrix,k):
+def fast_als(matrix, k):
     oldrss = float('inf')
     rss = float('inf')
     diff = float('inf')
@@ -296,18 +295,26 @@ def fast_als(matrix,k):
     m = x.shape[0]
     n = x.shape[1]
     u = numpy.random.normal(0.0, 1.0, (m, k))
+    utranspose = u.T
     v = numpy.random.normal(0.0, 1.0, (k, n)) # v -> (k x n)
 
     while rss > .00001:
-        for j in range(m):
-            p = ~numpy.isnan(x[j, :])
-            v[:, j] = numpy.linalg.lstsq(u[p, :],x[p, j])[0]
-
         for i in range(m):
             p = ~numpy.isnan(x[i, :])
-            u[i, :].T = numpy.linalg.lstsq(v[:, p].T, x[i, p].T)[0]
+            if sum(p) == 0:
+                print "BAD BAD BAD"
+                exit(1)
+            print sum(p)
+            print x.shape
+            print u.shape
+            print v.shape
+            utranspose[:, i] = numpy.linalg.lstsq(v[:, p].T, x[i, p].T)[0]
+        for j in range(n):
+            p = ~numpy.isnan(x[:, j])
+            v[:, j] = numpy.linalg.lstsq(u[p, :], x[p, j])[0]
 
-        approx = numpy.dot(u,v)
+        u = utranspose.T
+        approx = numpy.dot(u, v)
         rss = numpy.linalg.norm(x - approx)
         diff = (oldrss - rss) / oldrss
         oldrss = rss
