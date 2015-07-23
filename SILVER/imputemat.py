@@ -301,6 +301,7 @@ def fast_als(matrix, k):
     while rss > .00001:
         for i in range(m):
             p = ~numpy.isnan(x[i, :])
+            """
             if sum(p) == 0:
                 print "BAD BAD BAD"
                 exit(1)
@@ -308,6 +309,7 @@ def fast_als(matrix, k):
             print x.shape
             print u.shape
             print v.shape
+            """
             utranspose[:, i] = numpy.linalg.lstsq(v[:, p].T, x[i, p].T)[0]
         for j in range(n):
             p = ~numpy.isnan(x[:, j])

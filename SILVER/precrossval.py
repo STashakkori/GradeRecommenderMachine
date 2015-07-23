@@ -24,7 +24,6 @@ def main(target_course, go_back):
     orders = result['orders']
     activity_list = list(result['activity_list'])
     student_list = result['student_list']
-
     target_column = activity_list.index(target_course)
     remove_student_index = numpy.isnan(data[:, target_column])
     student_list = list(student_list[~remove_student_index])
@@ -38,7 +37,7 @@ def main(target_course, go_back):
             lower_bound_order = target_order - go_back
 
         for j in range(0, data.shape[1]):
-            current_grade_order = orders[i ,j]
+            current_grade_order = orders[i, j]
             if current_grade_order >= lower_bound_order < target_order:
                 data[i, j] = numpy.nan
 
@@ -51,8 +50,9 @@ def main(target_course, go_back):
     zerolist = numpy.where(validgradereference == 0.0)
     data = numpy.delete(data,zerolist,1)
     orders = numpy.delete(orders,zerolist,1)
-    activity_list = numpy.delete(activity_list,zerolist,0)
-    actual_vector = data[:,target_column]
+    activity_list = list(numpy.delete(activity_list,zerolist,0))
+    target_column = activity_list.index(target_course)
+    actual_vector = data[:,target_column].copy()
 
     dir_name = target_course.replace(" ", "")
     if not os.path.exists(dir_name):
