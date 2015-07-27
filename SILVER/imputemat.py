@@ -203,27 +203,6 @@ def calcals(matrix,k):
         if diff < .00001: break
     return u, v
 
-"""
-def als_pca(matrix, k):
-    x = matrix # x -> (m x n)
-    m = x.shape[0]
-    n = x.shape[1]
-    v = numpy.random.normal(0.0,1.0,(k,n)) # v -> (k x n)
-    utranspose = numpy.linalg.lstsq(v.T,x.T)[0]
-    u = utranspose.T
-    v = numpy.random.normal(0.0, 1.0, (k, n)) # v -> (k x n)
-    for i in range(0, len(m)):
-        n = ~numpy.isnan(x[i,:])
-        u[i,:] = numpy.linalg.lstsq(v[:,n].T,x[i,n].T)[0]
-        v[:,i] = numpy.linalg.lstsq()
-
-    approx = numpy.dot(u, v)
-    return u, v
-"""
-
-def als_svd(matrix, k):
-    return
-
 def imputeeigfull(matrix):
     copyofmatrix = matrix.copy()
     nanprofile = getnanprofile(matrix)
@@ -280,7 +259,7 @@ def imputesvdfull(matrix):
 
     return filledinmatrix
 
-def new_pca(matrix,k):
+def fast_svd(matrix,k):
     u,v = fast_als(matrix,k)
     new_matrix = numpy.dot(u,v)
     matrix[numpy.isnan(matrix)] = new_matrix[numpy.isnan(matrix)]
@@ -297,19 +276,11 @@ def fast_als(matrix, k):
     u = numpy.random.normal(0.0, 1.0, (m, k))
     utranspose = u.T
     v = numpy.random.normal(0.0, 1.0, (k, n)) # v -> (k x n)
+    count = 0
 
     while rss > .00001:
         for i in range(m):
             p = ~numpy.isnan(x[i, :])
-            """
-            if sum(p) == 0:
-                print "BAD BAD BAD"
-                exit(1)
-            print sum(p)
-            print x.shape
-            print u.shape
-            print v.shape
-            """
             utranspose[:, i] = numpy.linalg.lstsq(v[:, p].T, x[i, p].T)[0]
         for j in range(n):
             p = ~numpy.isnan(x[:, j])
@@ -317,11 +288,27 @@ def fast_als(matrix, k):
 
         u = utranspose.T
         approx = numpy.dot(u, v)
-        rss = numpy.linalg.norm(x - approx)
+        index = ~numpy.isnan(x)
+        rss = numpy.linalg.norm(x[index] - approx[index]) / math.sqrt(index.size)
         diff = (oldrss - rss) / oldrss
+        print(str(rss) + " " + str(diff))
         oldrss = rss
         if diff < .00001: break
+    u[u > numpy.nanmax(x[:])] = numpy.nanmax(x[:])
+    u[u < numpy.nanmin(x[:])] = numpy.nanmin(x[:])
     return u, v
+
+def fast_pca(matrix,k):
+    mean = numpy.nanmean(matrix, axis = 0)
+    meansubtracted = numpy.subtract(matrix[:,:],mean)
+    u,v = fast_als(meansubtracted,k)
+    new_matrix = numpy.dot(u,v)
+    matrix[numpy.isnan(matrix)] = new_matrix[numpy.isnan(matrix)]
+    for i in range(0,matrix.shape[1]):
+        matrix[:,i] += mean[i]
+    del mean
+    del new_matrix
+    return matrix
 
 def rootsumsquared(matrix1,matrix2):
     originalmatrix = matrix1.copy()

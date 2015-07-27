@@ -43,23 +43,42 @@ def main(argv1, argv2, argv3, argv4):
     actual_vector = result['actual_vector']
     target_course_column = activity_list.index(target_course)
     iterations, groupings = n_in_k_fold(data, k_folds, n_iterations, target_course_column)
+
     """
     #uncomment to save results. Takes a while so don't do it if not necessary
     save_data(data, k_folds, n_iterations, target_course, new_dir_name, iterations, groupings, student_list,
               activity_list)
     """
-    k_components = 4
-    estimates,results = run_algorithm(new_dir_name, k_components, target_course, k_folds)
-    out_dir_name = dir_name + "/crossvalout"
-    if not os.path.exists(out_dir_name):
-        os.makedirs(out_dir_name)
-    numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + "_result_matrices.npz",
-                    activity_list=activity_list, student_list=student_list,
-                    **{"result_matrix" + str(j): value for j,value in enumerate(results)})
 
-    numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + "_estimate_vectors.npz",
-                   actual_vector=actual_vector,
-                   **{"estimate_vector" + str(j): value for j,value in enumerate(estimates)})
+    for i in range(1,5):
+        algorithm = "svd"
+        k_components = i
+        estimates,results = run_algorithm(new_dir_name, k_components, target_course, k_folds, algorithm)
+        out_dir_name = dir_name + "/crossvalout"
+        if not os.path.exists(out_dir_name):
+            os.makedirs(out_dir_name)
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_result_matrices.npz",
+                        activity_list=activity_list, student_list=student_list,
+                        **{"result_matrix" + str(j): value for j,value in enumerate(results)})
+
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_estimate_vectors.npz",
+                       actual_vector=actual_vector,
+                       **{"estimate_vector" + str(j): value for j,value in enumerate(estimates)})
+
+    for i in range(1,5):
+        algorithm = "pca"
+        k_components = i
+        estimates,results = run_algorithm(new_dir_name, k_components, target_course, k_folds, algorithm)
+        out_dir_name = dir_name + "/crossvalout"
+        if not os.path.exists(out_dir_name):
+            os.makedirs(out_dir_name)
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_result_matrices.npz",
+                        activity_list=activity_list, student_list=student_list,
+                        **{"result_matrix" + str(j): value for j,value in enumerate(results)})
+
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_estimate_vectors.npz",
+                       actual_vector=actual_vector,
+                       **{"estimate_vector" + str(j): value for j,value in enumerate(estimates)})
 
 """
     remove_target
@@ -106,7 +125,7 @@ def save_data(data, k, n, t, new_dir_name, iterations, groupings, student_list, 
 """
     run_algorithm
 """
-def run_algorithm(sub_dir_name, k, t, number_folds):
+def run_algorithm(sub_dir_name, k, t, number_folds, algorithm):
     estimates = []
     results = []
     for i, iteration in enumerate(os.listdir(sub_dir_name)):
@@ -118,7 +137,10 @@ def run_algorithm(sub_dir_name, k, t, number_folds):
         for fold in range(0, number_folds):
             data_matrix = folds['fold' + str(fold)]
             groupings = folds['groupings']
-            result = imputemat.new_pca(data_matrix, k)
+            if algorithm == "svd":
+                result = imputemat.fast_svd(data_matrix, k)
+            elif algorithm == "pca":
+                result = imputemat.fast_pca(data_matrix, k)
             #result = imputemat.imputepcafast(data_matrix, k)
             #result = imputemat.imputecolmean(data_matrix)
             results.append(result)

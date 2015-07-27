@@ -25,9 +25,18 @@ def main(target_course, go_back):
     activity_list = list(result['activity_list'])
     student_list = result['student_list']
     target_column = activity_list.index(target_course)
+
+    tests = {"SATV_score.1", "SATM_score.1", "ACTEng_score.1", "ACTMat_score.1", "MathPlacement_PLM1_Score.1",
+             "MathPlacement_PLM2_Score.1", "MathPlacement_PLM3_Score.1", "HSGPA.1"}
+
+    # normalize test scores to be on a 12.0 scale as to not skew grade predictions
+    for index, activity in enumerate(activity_list):
+        if activity in tests:
+            data[:,index] = (data[:, index] / numpy.nanmax(data[:, index])) * 12.0
+
     remove_student_index = numpy.isnan(data[:, target_column])
-    student_list = list(student_list[~remove_student_index])
-    data = data[~remove_student_index, :]
+    student_list = student_list[~remove_student_index]
+    data = data[~remove_student_index, :] # remove students that have not taken target course
     orders = orders[~remove_student_index, :]
 
     for i in range(0, data.shape[0]):
@@ -52,7 +61,9 @@ def main(target_course, go_back):
     orders = numpy.delete(orders,zerolist,1)
     activity_list = list(numpy.delete(activity_list,zerolist,0))
     target_column = activity_list.index(target_course)
-    actual_vector = data[:,target_column].copy()
+    student_list = student_list[sum(~numpy.isnan(data.T)) >= 2]
+    data = data[sum(~numpy.isnan(data.T)) >= 2] # remove rows that don't have at least 2 valid grades/scores in them.
+    actual_vector = data[:, target_column].copy()
 
     dir_name = target_course.replace(" ", "")
     if not os.path.exists(dir_name):
