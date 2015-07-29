@@ -5,9 +5,11 @@ import imputemat
 import statistics
 from matplotlib import pyplot
 import pprint
+import json
 
 def main():
-    results = numpy.load("CS2440.1/crossvalout/k1_gobackgo_back0_estimate_vectors.npz")
+    results = numpy.load("CS2440.1/crossvalout/k1_goback0svd_estimate_vectors.npz")
+    print results.files
     data0 = numpy.reshape(results['estimate_vector0'], (-1, 1))
     data1 = numpy.reshape(results['estimate_vector1'], (-1, 1))
     data2 = numpy.reshape(results['estimate_vector2'], (-1, 1))
@@ -47,27 +49,41 @@ def main():
 
     print "*************"
     print average
-    results2 = numpy.load("CS2440.1/crossvalout/k1_gobackgo_back0_result_matrices.npz")
+    results2 = numpy.load("CS2440.1/crossvalout/k1_goback0svd_result_matrices.npz")
+    print results2.files
     activities = results2['activity_list']
     print len(activities)
     target_column = list(activities).index("C S 2440.1")
     print target_column
     resultant1 = results2['result_matrix0']
     from matplotlib import pyplot as plt
-    #plt.imshow(resultant1,interpolation="nearest")
+    plt.plot(data0)
     plt.plot(resultant1[:,target_column])
-    #plt.clim(-20,20)
-    #plt.colorbar()
     plt.show()
-    exit(1)
 
     debug_mode = True
     if debug_mode:
+        print "==== mean ===="
+        print numpy.mean(actual)
         numpy.set_printoptions(threshold=numpy.nan)
         print "** std deviation **"
         print numpy.std(actual)
-        for index,item in enumerate(data0):
-            print(str(data0[index]) + " " + str(actual[index]))
+
+    """
+    studentmap = loadjson("../preprocessing/CSDataFile_ForParry_2014Nov26_studentdict.json")
+    print studentmap["1400013"]["C S 2440"]
+    """
+
+
+"""
+    loadjson - method that loads a json object from memory and returns it.
+"""
+def loadjson(filename):
+        f = open(filename,"rb")
+        j = json.loads(open(filename).read())
+        f.close()
+        return j
+
 
 if __name__ == "__main__":
     try:

@@ -35,6 +35,7 @@ def main(argv1, argv2, argv3, argv4):
         os.makedirs(sub_dir_name)
 
     goback = re.search('go_back.*', base_name).group(0)
+    goback_num = re.search('go_back(.*)', base_name).group(1)
     new_dir_name = sub_dir_name + "/" + goback
     result = numpy.load(file_name)
     data = result['data']
@@ -50,33 +51,48 @@ def main(argv1, argv2, argv3, argv4):
               activity_list)
     """
 
-    for i in range(1,5):
+    algorithm = "mean"
+    k_components = 1
+    estimates, results = run_algorithm(new_dir_name, k_components, target_course, k_folds, algorithm)
+
+    out_dir_name = dir_name + "/crossvalout"
+    if not os.path.exists(out_dir_name):
+        os.makedirs(out_dir_name)
+    numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback_num + algorithm + "_result_matrices.npz",
+                    activity_list=activity_list, student_list=student_list,
+                    **{"result_matrix" + str(j): value for j,value in enumerate(results)})
+
+    numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback_num + algorithm + "_estimate_vectors.npz",
+                   actual_vector=actual_vector,
+                   **{"estimate_vector" + str(j): value for j,value in enumerate(estimates)})
+
+    for i in range(1, 5):
         algorithm = "svd"
         k_components = i
         estimates,results = run_algorithm(new_dir_name, k_components, target_course, k_folds, algorithm)
         out_dir_name = dir_name + "/crossvalout"
         if not os.path.exists(out_dir_name):
             os.makedirs(out_dir_name)
-        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_result_matrices.npz",
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback_num + algorithm + "_result_matrices.npz",
                         activity_list=activity_list, student_list=student_list,
                         **{"result_matrix" + str(j): value for j,value in enumerate(results)})
 
-        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_estimate_vectors.npz",
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback_num + algorithm + "_estimate_vectors.npz",
                        actual_vector=actual_vector,
                        **{"estimate_vector" + str(j): value for j,value in enumerate(estimates)})
 
-    for i in range(1,5):
+    for i in range(1, 5):
         algorithm = "pca"
         k_components = i
         estimates,results = run_algorithm(new_dir_name, k_components, target_course, k_folds, algorithm)
         out_dir_name = dir_name + "/crossvalout"
         if not os.path.exists(out_dir_name):
             os.makedirs(out_dir_name)
-        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_result_matrices.npz",
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback_num + algorithm + "_result_matrices.npz",
                         activity_list=activity_list, student_list=student_list,
                         **{"result_matrix" + str(j): value for j,value in enumerate(results)})
 
-        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback + algorithm + "_estimate_vectors.npz",
+        numpy.savez_compressed(out_dir_name + "/k" + str(k_components) + "_goback" + goback_num + algorithm + "_estimate_vectors.npz",
                        actual_vector=actual_vector,
                        **{"estimate_vector" + str(j): value for j,value in enumerate(estimates)})
 
@@ -133,20 +149,26 @@ def run_algorithm(sub_dir_name, k, t, number_folds, algorithm):
         folds = numpy.load(sub_dir_name + "/" + "iteration" + str(i) + ".npz")
         a = list(folds['activity_list'])
         target_column = a.index(t)
-        estimate = []
+        estimate = None
         for fold in range(0, number_folds):
             data_matrix = folds['fold' + str(fold)]
+            if estimate is None:
+                estimate = numpy.full((data_matrix.shape[0],),fill_value=numpy.nan)
+
             groupings = folds['groupings']
             if algorithm == "svd":
-                result = imputemat.fast_svd(data_matrix, k)
+                result = imputemat.fast_svd(data_matrix.copy(), k)
             elif algorithm == "pca":
-                result = imputemat.fast_pca(data_matrix, k)
-            #result = imputemat.imputepcafast(data_matrix, k)
-            #result = imputemat.imputecolmean(data_matrix)
+                result = imputemat.fast_pca(data_matrix.copy(), k)
+            elif algorithm == "mean":
+                result = imputemat.imputecolmean(data_matrix)
+
+            result[result > numpy.nanmax(data_matrix[:])] = numpy.nanmax(data_matrix[:])
+            result[result < numpy.nanmin(data_matrix[:])] = numpy.nanmin(data_matrix[:])
             results.append(result)
             for row_index, group_assignment in enumerate(groupings):
                 if group_assignment == fold + 1:
-                    estimate.append(result[row_index][target_column])
+                    estimate[row_index] = result[row_index][target_column]
         estimates.append(estimate)
     return estimates, results
 
@@ -167,7 +189,7 @@ if __name__ == "__main__":
         main(input_matrix_filename, number_of_folds, number_of_iterations, target_course)
         t1 = time.time()
         total_time = t1 - t0
-        print(colored("crossval ~=> " + str(total_time) + " seconds.","yellow"))
+        print(colored("crossval ~=> " + str(total_time) + " seconds.", "yellow"))
     except IOError as e:
         print e.strerror
         print usage

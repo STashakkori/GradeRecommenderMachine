@@ -32,7 +32,7 @@ def main(target_course, go_back):
     # normalize test scores to be on a 12.0 scale as to not skew grade predictions
     for index, activity in enumerate(activity_list):
         if activity in tests:
-            data[:,index] = (data[:, index] / numpy.nanmax(data[:, index])) * 12.0
+            data[:, index] = (data[:, index] / numpy.nanmax(data[:, index])) * 12.0
 
     remove_student_index = numpy.isnan(data[:, target_column])
     student_list = student_list[~remove_student_index]
@@ -57,13 +57,20 @@ def main(target_course, go_back):
                 validgradereference[j] += 1
 
     zerolist = numpy.where(validgradereference == 0.0)
-    data = numpy.delete(data,zerolist,1)
-    orders = numpy.delete(orders,zerolist,1)
-    activity_list = list(numpy.delete(activity_list,zerolist,0))
+    data = numpy.delete(data,zerolist, 1)
+    orders = numpy.delete(orders,zerolist, 1)
+    activity_list = list(numpy.delete(activity_list,zerolist, 0))
     target_column = activity_list.index(target_course)
     student_list = student_list[sum(~numpy.isnan(data.T)) >= 2]
     data = data[sum(~numpy.isnan(data.T)) >= 2] # remove rows that don't have at least 2 valid grades/scores in them.
     actual_vector = data[:, target_column].copy()
+
+    """
+    sindex = list(student_list).index("1400013")
+    aindex = activity_list.index("C S 2440.1")
+    print data[sindex][aindex]
+    exit(1)
+    """
 
     dir_name = target_course.replace(" ", "")
     if not os.path.exists(dir_name):

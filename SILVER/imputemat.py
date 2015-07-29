@@ -242,20 +242,20 @@ def imputesvdfull(matrix):
         sindex = numpy.argmax(svmatrix)
         mean = filledinmatrix.mean(axis=0)
         meancopy = filledinmatrix.mean(axis=0)
-        meansubtracted = numpy.subtract(filledinmatrix[:,:],meancopy)
-        targeteigvector = v[:,sindex]
-        temp = targeteigvector.reshape(targeteigvector.size,1)
+        meansubtracted = numpy.subtract(filledinmatrix[:, :], meancopy)
+        targeteigvector = v[:, sindex]
+        temp = targeteigvector.reshape(targeteigvector.size, 1)
         newmatrix = numpy.dot(meansubtracted,temp)
         newmatrix = numpy.dot(newmatrix,temp.T)
         for i in range(0,newmatrix.shape[1]):
-            newmatrix[:,i] += mean[i]
+            newmatrix[:, i] += mean[i]
 
         print rootmeansquared(matrix,newmatrix)
 
-        for i in range(0,filledinmatrix.shape[0]):
-            for j in range(0,filledinmatrix.shape[1]):
-                if nanprofile[i,j] == 1:
-                    filledinmatrix[i,j] = newmatrix[i,j]
+        for i in range(0, filledinmatrix.shape[0]):
+            for j in range(0, filledinmatrix.shape[1]):
+                if nanprofile[i, j] == 1:
+                    filledinmatrix[i, j] = newmatrix[i, j]
 
     return filledinmatrix
 
@@ -267,6 +267,7 @@ def fast_svd(matrix,k):
     return matrix
 
 def fast_als(matrix, k):
+    debug_mode = True
     oldrss = float('inf')
     rss = float('inf')
     diff = float('inf')
@@ -291,11 +292,12 @@ def fast_als(matrix, k):
         index = ~numpy.isnan(x)
         rss = numpy.linalg.norm(x[index] - approx[index]) / math.sqrt(index.size)
         diff = (oldrss - rss) / oldrss
-        print(str(rss) + " " + str(diff))
+        if debug_mode and count % 10 == 0:
+            sys.stdout.write("\r" + str(count) + " " + str(rss) + " " + str(diff))
+            sys.stdout.flush()
         oldrss = rss
+        count += 1
         if diff < .00001: break
-    u[u > numpy.nanmax(x[:])] = numpy.nanmax(x[:])
-    u[u < numpy.nanmin(x[:])] = numpy.nanmin(x[:])
     return u, v
 
 def fast_pca(matrix,k):
