@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-    imputemat.py - script that takes a sparse numpy matrix of grade data and imputes values based on the parameters
+    imputemat.py - script that takes a numpy matrix of grade data and imputes values for missing grades based on the parameters
                    passed in as command line arguments. The arguments can specify a particular algorithm that is used.
                    Algorithms include the following: MEAN, EIG, SVD, ALS.
 """
