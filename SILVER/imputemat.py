@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-    imputemat.py - script that takes a numpy matrix of grade data and imputes values for missing grades based on the parameters
+    imputemat.py - script that takes a sparse numpy matrix of grade data and imputes values based on the parameters
                    passed in as command line arguments. The arguments can specify a particular algorithm that is used.
                    Algorithms include the following: MEAN, EIG, SVD, ALS.
 """
@@ -258,6 +258,25 @@ def imputesvdfull(matrix):
                     filledinmatrix[i, j] = newmatrix[i, j]
 
     return filledinmatrix
+
+def fast_svd_predict(matrix,k):
+    u,v = fast_als(matrix,k)
+    new_matrix = numpy.dot(u,v)
+    matrix[numpy.isnan(matrix)] = new_matrix[numpy.isnan(matrix)]
+    del new_matrix
+    return matrix, u, v
+
+def fast_pca_predict(matrix,k):
+    mean = numpy.nanmean(matrix, axis = 0)
+    meansubtracted = numpy.subtract(matrix[:,:],mean)
+    u,v = fast_als(meansubtracted,k)
+    new_matrix = numpy.dot(u,v)
+    matrix[numpy.isnan(matrix)] = new_matrix[numpy.isnan(matrix)]
+    for i in range(0,matrix.shape[1]):
+        matrix[:,i] += mean[i]
+    del mean
+    del new_matrix
+    return matrix, u, v
 
 def fast_svd(matrix,k):
     u,v = fast_als(matrix,k)
